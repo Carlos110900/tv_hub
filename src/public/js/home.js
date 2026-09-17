@@ -33,9 +33,50 @@ function createChannelCard(channel) {
   return card;
 }
 
-function displayChannels(channels) {
-  channelList.replaceChildren(...channels.map(createChannelCard));
-  channelStatus.textContent = `${channels.length} channel${channels.length === 1 ? '' : 's'} from MongoDB`;
+function createChannelRow(title, channels) {
+  const section = document.createElement('section');
+  section.className = 'category-section';
+
+  const heading = document.createElement('h2');
+  heading.textContent = title;
+
+  const row = document.createElement('div');
+  row.className = 'channel-row';
+  row.append(...channels.slice(0, 6).map(createChannelCard));
+
+  section.append(heading, row);
+  return section;
+}
+
+function displayBrowseCollections(channels) {
+  const categoryNames = ['News', 'General', 'Music', 'Entertainment', 'Sports', 'Movies'];
+  const collections = [
+    createChannelRow('Featured channels', channels),
+    ...categoryNames
+      .map((category) => ({
+        category,
+        channels: channels.filter((channel) => channel.categories.includes(category))
+      }))
+      .filter(({ channels }) => channels.length > 0)
+      .map(({ category, channels }) => createChannelRow(category, channels))
+  ];
+
+  channelList.replaceChildren(...collections);
+}
+
+function displaySearchResults(channels, search) {
+  const section = document.createElement('section');
+  section.className = 'category-section';
+
+  const heading = document.createElement('h2');
+  heading.textContent = `Results for “${search}”`;
+
+  const results = document.createElement('div');
+  results.className = 'search-results';
+  results.append(...channels.map(createChannelCard));
+
+  section.append(heading, results);
+  channelList.replaceChildren(section);
 }
 
 async function loadChannels(search = '') {
@@ -49,7 +90,14 @@ async function loadChannels(search = '') {
   }
 
   const { channels } = await response.json();
-  displayChannels(channels);
+  channelStatus.textContent = `${channels.length} channel${channels.length === 1 ? '' : 's'} available`;
+
+  if (search) {
+    displaySearchResults(channels, search);
+    return;
+  }
+
+  displayBrowseCollections(channels);
 }
 
 searchInput.addEventListener('input', () => loadChannels(searchInput.value));

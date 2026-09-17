@@ -6,22 +6,51 @@
     <title>TV Hub</title>
     <link rel="stylesheet" href="/css/styles.css" />
   </head>
-  <body>
-    <main>
-      <h1>TV HUB</h1>
-      <p id="welcome">Loading your session…</p>
-      <button id="logout">Logout</button>
+  <body class="app-body">
+    <main class="app-shell">
+      <aside class="sidebar">
+        <a class="brand" href="/">TV<span>HUB</span></a>
 
-      <section class="channels-section">
-        <h2>Search</h2>
-        <label for="channel-search">Find a channel by name, country, or category</label>
-        <input id="channel-search" type="search" placeholder="Search channels..." />
-      </section>
+        <nav aria-label="Main navigation">
+          <a class="nav-link active" href="/">⌂ <span>Home</span></a>
+          <a class="nav-link" href="#channel-search">⌕ <span>Search</span></a>
+          <a class="nav-link" href="#browse">▦ <span>Browse categories</span></a>
+        </nav>
 
-      <section class="channels-section">
-        <h2>Channels</h2>
-        <p id="channel-status">Loading channels from the backend…</p>
-        <div id="channel-list" class="channel-grid"></div>
+        <div class="sidebar-note">
+          <p class="eyebrow">YOUR LIBRARY</p>
+          <p>Channels are grouped from MongoDB playlist categories.</p>
+        </div>
+      </aside>
+
+      <section class="content">
+        <header class="topbar">
+          <label class="search-box" for="channel-search">
+            <span>⌕</span>
+            <input id="channel-search" type="search" placeholder="What do you want to watch?" />
+          </label>
+          <div class="account">
+            <p id="welcome">Loading your session…</p>
+            <button id="logout" class="logout-button">Log out</button>
+          </div>
+        </header>
+
+        <section class="hero">
+          <p class="eyebrow">LIVE TELEVISION</p>
+          <h1>Find a channel<br />for every moment.</h1>
+          <p>Real channel data, organized into simple collections.</p>
+        </section>
+
+        <section id="browse" class="browse-section">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">FROM MONGODB</p>
+              <h2>Browse channels</h2>
+            </div>
+            <p id="channel-status">Loading channels…</p>
+          </div>
+          <div id="channel-list"></div>
+        </section>
       </section>
     </main>
 

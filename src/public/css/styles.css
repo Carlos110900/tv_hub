@@ -1,15 +1,60 @@
-:root { font-family: Arial, sans-serif; color: #172033; background: #f4f7fb; }
+:root { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #172033; background: #f4f7fb; }
 body { margin: 0; min-height: 100vh; display: grid; place-items: center; }
-main { width: min(92vw, 980px); background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 8px 30px #1720331a; }
-h1 { margin-top: 0; } form { display: grid; gap: .8rem; } input, button { padding: .75rem; font: inherit; }
+body:not(.app-body) main { width: min(92vw, 620px); background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 8px 30px #1720331a; }
+body:not(.app-body) h1 { margin-top: 0; }
+form { display: grid; gap: .8rem; }
+input, button { padding: .75rem; font: inherit; }
 button { cursor: pointer; background: #155eef; color: white; border: 0; border-radius: 6px; }
-button:disabled, input:disabled { cursor: not-allowed; opacity: .65; } .error { color: #b42318; min-height: 1.3em; }
-.placeholder { border: 1px solid #d0d5dd; padding: 1rem; margin-top: 1rem; border-radius: 8px; }
-.channels-section { border: 1px solid #d0d5dd; padding: 1rem; margin-top: 1rem; border-radius: 8px; }
-.channels-section label { display: block; margin-bottom: .5rem; color: #475467; }
-.channel-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; }
-.channel-card { border: 1px solid #d0d5dd; border-radius: 8px; overflow: hidden; padding-bottom: .8rem; background: #fff; }
-.channel-logo { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; background: #e4e7ec; }
-.channel-card h3, .channel-card p { margin: .65rem .8rem 0; }
-.channel-country { color: #475467; }
-.channel-categories { color: #155eef; font-size: .9rem; }
+button:disabled, input:disabled { cursor: not-allowed; opacity: .65; }
+.error { color: #b42318; min-height: 1.3em; }
+
+.app-body { display: block; background: #020817; color: #e8f1ff; }
+.app-shell { min-height: 100vh; display: grid; grid-template-columns: 248px minmax(0, 1fr); background: #020817; }
+.sidebar { position: sticky; top: 0; align-self: start; min-height: 100vh; box-sizing: border-box; padding: 2rem 1.25rem; background: #06142e; border-right: 1px solid #18345f; }
+.brand { display: block; margin: 0 .75rem 2.75rem; color: #f8fbff; text-decoration: none; font-size: 1.45rem; font-weight: 850; letter-spacing: -.08em; }
+.brand span { color: #38bdf8; }
+.sidebar nav { display: grid; gap: .35rem; }
+.nav-link { display: flex; gap: .8rem; align-items: center; border-radius: .55rem; padding: .75rem; color: #97acd0; text-decoration: none; font-weight: 700; }
+.nav-link:hover, .nav-link.active { color: #f8fbff; background: #12366b; }
+.sidebar-note { margin: 2rem .75rem; padding-top: 1.5rem; border-top: 1px solid #18345f; color: #8ea7ce; font-size: .82rem; line-height: 1.55; }
+.eyebrow { margin: 0; color: #38bdf8; font-size: .68rem; font-weight: 850; letter-spacing: .15em; }
+.content { min-width: 0; padding: 1.35rem clamp(1.25rem, 4vw, 4rem) 3.5rem; background: radial-gradient(circle at 70% -15%, #134f9e 0, #061a3c 33%, #020817 67%); }
+.topbar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.search-box { display: flex; align-items: center; gap: .65rem; width: min(420px, 60vw); padding: 0 .95rem; border: 1px solid #305687; border-radius: 999px; background: #eaf4ff; color: #12366b; }
+.search-box input { width: 100%; padding: .72rem 0; border: 0; outline: 0; background: transparent; color: #102a53; }
+.account { display: flex; align-items: center; gap: .75rem; }
+.account p { max-width: 240px; margin: 0; overflow: hidden; color: #d8e8ff; font-size: .82rem; text-overflow: ellipsis; white-space: nowrap; }
+.logout-button { padding: .6rem .85rem; border: 1px solid #416d9f; background: transparent; color: #e8f1ff; font-size: .78rem; font-weight: 700; }
+.logout-button:hover { background: #12366b; }
+.hero { padding: clamp(3rem, 8vw, 6.5rem) 0 3rem; }
+.hero h1 { max-width: 720px; margin: .65rem 0 1rem; color: #f8fbff; font-size: clamp(2.8rem, 6.2vw, 5.5rem); line-height: .94; letter-spacing: -.075em; }
+.hero > p:last-child { max-width: 420px; margin: 0; color: #a9c4eb; font-size: 1.05rem; }
+.browse-section { margin-top: 1rem; }
+.section-heading { display: flex; align-items: end; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; }
+.section-heading h2, .category-section h2 { margin: .3rem 0 0; color: #f8fbff; font-size: 1.55rem; letter-spacing: -.04em; }
+#channel-status { margin: 0; color: #94b1d8; font-size: .8rem; }
+.category-section { margin-top: 2.6rem; }
+.channel-row, .search-results { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(155px, 180px); gap: 1rem; overflow-x: auto; padding: 1rem .1rem 1.15rem; scrollbar-color: #2d6eb4 transparent; }
+.search-results { grid-auto-flow: initial; grid-template-columns: repeat(auto-fill, minmax(155px, 180px)); }
+.channel-card { min-width: 0; overflow: hidden; border: 1px solid transparent; border-radius: .7rem; background: #0c2348; box-shadow: 0 12px 22px #00000029; transition: transform .2s ease, background .2s ease, border-color .2s ease; }
+.channel-card:hover { transform: translateY(-5px); border-color: #38bdf8; background: #12366b; }
+.channel-logo { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; background: #163b6b; }
+.channel-card h3 { margin: .9rem .85rem .25rem; overflow: hidden; color: #f8fbff; font-size: .92rem; text-overflow: ellipsis; white-space: nowrap; }
+.channel-card p { margin: 0 .85rem .8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.channel-country { color: #abc4e6; font-size: .76rem; }
+.channel-categories { color: #38bdf8; font-size: .7rem; font-weight: 700; }
+
+@media (max-width: 760px) {
+  .app-shell { grid-template-columns: 1fr; }
+  .sidebar { position: static; min-height: auto; padding: 1rem; border-right: 0; border-bottom: 1px solid #18345f; }
+  .brand { margin: 0 0 1rem; }
+  .sidebar nav { grid-template-columns: repeat(3, 1fr); }
+  .nav-link { justify-content: center; padding: .55rem; font-size: .75rem; }
+  .sidebar-note { display: none; }
+  .content { padding: 1rem 1.25rem 2.5rem; }
+  .topbar { align-items: stretch; flex-direction: column-reverse; }
+  .search-box { width: auto; }
+  .account { justify-content: space-between; }
+  .hero { padding-top: 3.5rem; }
+  .channel-row { grid-auto-columns: minmax(145px, 165px); }
+}
