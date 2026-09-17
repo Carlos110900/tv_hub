@@ -35,15 +35,11 @@ export const listChannels: RequestHandler = async (request, response) => {
     filter.country = new RegExp(`^${escapeRegularExpression(country)}$`, 'i');
   }
 
-  // MISIÓN OPCIONAL C:
-  // Completa el campo usado para ordenar por nombre.
-  // Pista: revisa los campos definidos en el modelo Channel.
-  const sort = requestedSort === 'country' ? 'country name' : '____';
+  // MISIÓN OPCIONAL C implementada: el orden predeterminado usa el nombre.
+  const sort = requestedSort === 'country' ? 'country name' : 'name';
 
-  // TODO 1:
-  // Recupera los canales que coinciden con el filtro desde MongoDB.
-  // Pista: ¿Qué método de Mongoose recupera varios documentos?
-  const channels = await Channel.____(filter).sort(sort);
+  // TODO 1 implementado: find recupera los canales que coinciden con el filtro.
+  const channels = await Channel.find(filter).sort(sort);
 
   response.json({ channels });
 };

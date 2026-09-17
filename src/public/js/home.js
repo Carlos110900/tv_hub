@@ -14,31 +14,23 @@ function createChannelCard(channel) {
   card.className = 'channel-card';
 
   const logo = document.createElement('img');
-  // TODO 3:
-  // Muestra la URL del logo del canal actual.
-  // Pista: ¿Qué propiedad de Channel guarda la URL del logo?
-  logo.src = 'https://placehold.co/160x90/e5e7eb/111827?text=TODO+3';
+  // TODO 3 implementado: logoUrl se usa como origen de la imagen.
+  logo.src = channel.logoUrl;
   logo.alt = `${channel.name} logo`;
   logo.className = 'channel-logo';
 
   const name = document.createElement('h3');
-  // TODO 2:
-  // Muestra el nombre del canal actual.
-  // Pista: Revisa el objeto que devuelve GET /api/channels.
-  name.textContent = 'TODO 2';
+  // TODO 2 implementado: name se muestra como título de la tarjeta.
+  name.textContent = channel.name;
 
   const country = document.createElement('p');
-  // MISIÓN OPCIONAL A:
-  // Muestra el país del canal actual.
-  // Pista: ¿Qué propiedad de Channel guarda el país?
-  country.textContent = 'MISIÓN OPCIONAL A';
+  // MISIÓN OPCIONAL A implementada: country se muestra debajo del nombre.
+  country.textContent = channel.country;
   country.className = 'channel-country';
 
   const categories = document.createElement('p');
-  // TODO 4:
-  // Convierte el arreglo de categorías en texto legible.
-  // Ejemplo: ["News", "General"] → "News · General"
-  categories.textContent = 'TODO 4';
+  // TODO 4 implementado: join convierte las categorías en texto separado por ·.
+  categories.textContent = channel.categories.join(' · ');
   categories.className = 'channel-categories';
 
   card.append(logo, name, country, categories);
@@ -52,10 +44,8 @@ function displayChannels(channels) {
 
 async function loadChannels(search = '') {
   channelStatus.textContent = 'Loading channels from the backend…';
-  // TODO 5:
-  // Envía el valor actual de búsqueda al backend.
-  // Pista: el backend ya acepta ?search=...
-  const query = search ? `?${new URLSearchParams({ search: 'TODO 5' })}` : '';
+  // TODO 5 implementado: search se envía al parámetro que ya reconoce la API.
+  const query = search ? `?${new URLSearchParams({ search })}` : '';
   const response = await fetch(`/api/channels${query}`);
 
   if (!response.ok) {
