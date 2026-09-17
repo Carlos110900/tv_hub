@@ -1,5 +1,9 @@
 node_modules/
 dist/
 docs/
+!docs/
+docs/*
+!docs/session-10-student-checkpoints.md
+!docs/session-11-m3u-import.md
 .env
 coverage/

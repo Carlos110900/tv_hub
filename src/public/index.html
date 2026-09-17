@@ -12,28 +12,19 @@
       <p id="welcome">Loading your session…</p>
       <button id="logout">Logout</button>
 
-      <section class="placeholder">
+      <section class="channels-section">
         <h2>Search</h2>
-        <input value="Search channels..." disabled />
+        <label for="channel-search">Find a channel by name, country, or category</label>
+        <input id="channel-search" type="search" placeholder="Search channels..." />
       </section>
 
-      <section class="placeholder">
-        <h2>Categories</h2>
-        <p>Coming in V2</p>
-      </section>
-
-      <section class="placeholder">
+      <section class="channels-section">
         <h2>Channels</h2>
-        <p>Channels coming soon</p>
-      </section>
-
-      <section class="placeholder">
-        <h2>Favorites</h2>
-        <p>Coming in V2</p>
+        <p id="channel-status">Loading channels from the backend…</p>
+        <div id="channel-list" class="channel-grid"></div>
       </section>
     </main>
 
     <script src="/js/home.js"></script>
   </body>
 </html>
-

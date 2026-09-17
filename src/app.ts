@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import path from 'node:path';
 import { healthRouter } from './routes/health.routes.js';
 import { authRouter } from './routes/auth.routes.js';
+import { channelRouter } from './routes/channel.routes.js';
 import { adminRouter, userRouter } from './routes/user.routes.js';
 import { errorHandler, notFound } from './middleware/error.middleware.js';
 
@@ -17,6 +18,7 @@ app.use(cookieParser());
 
 app.use(healthRouter);
 app.use('/api/auth', authRouter);
+app.use('/api/channels', channelRouter);
 app.use('/api/users', userRouter);
 app.use('/api/admin', adminRouter);
 
