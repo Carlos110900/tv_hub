@@ -9,15 +9,15 @@ Avoid introducing additional architectural layers unless the course explicitly r
 
 TV Hub es un proyecto universitario de Backend para enseñar Node.js, Express, TypeScript, MVC, MongoDB, Mongoose, Docker, autenticación, autorización, JWT, refresh tokens, persistencia de sesiones, APIs REST y testing.
 
-La versión actual es **V2 — Canales simples sobre la base de autenticación de V1**. V1 sigue siendo parte del proyecto: registro, login, JWT, cookies HttpOnly, sesiones persistentes, refresh, logout y autorización deben conservarse funcionando.
+La versión actual es **V3 — Discover & Favorites sobre la base de autenticación y canales de V2**. V1 sigue siendo parte del proyecto: registro, login, JWT, cookies HttpOnly, sesiones persistentes, refresh, logout y autorización deben conservarse funcionando.
 
 Antes de modificar código:
 
 1. Lee este `AGENTS.md`.
 2. Lee `docs/requerimientos-v1.md` como referencia histórica de la base de autenticación.
 3. Inspecciona el repositorio.
-4. Respeta estrictamente el alcance de V2.
-5. No implementes funcionalidades de V3.
+4. Respeta estrictamente el alcance de V3.
+5. No implementes reproducción de streams ni funcionalidades posteriores.
 
 ## Filosofía educativa
 
@@ -82,7 +82,7 @@ No convertir V2 en Layered Architecture. No agregar `Service`, `Repository`, DTO
 
 - Autenticación, autorización y manejo de errores.
 
-## Alcance permitido de V2
+## Alcance permitido de V3
 
 V2 incorpora una funcionalidad simple y visual de canales:
 
@@ -93,6 +93,7 @@ V2 incorpora una funcionalidad simple y visual de canales:
 - tarjetas de canales en `src/public` con logo, nombre, país y categorías;
 - búsqueda simple desde el frontend;
 - tests pequeños y educativos para canales.
+- favoritos por usuario con `Favorite` Model, índice único `userId` + `channelId`, rutas protegidas y estrellas en el frontend.
 
 No crear colecciones separadas para categorías o países. No usar aggregation pipelines ni paginación.
 
@@ -116,7 +117,6 @@ No crear colecciones separadas para categorías o países. No usar aggregation p
 
 NO implementar todavía:
 
-- favoritos o `FavoriteList`;
 - playlists de usuario;
 - reproductor de streaming o integración HLS;
 - gestión avanzada, descarga o parsing de M3U;
@@ -126,7 +126,7 @@ NO implementar todavía:
 - OAuth externo;
 - paginación compleja;
 - `Service`, `Repository`, DTO, Clean Architecture o Hexagonal Architecture;
-- funcionalidades de V3.
+- funcionalidades posteriores a V3.
 
 ## Testing
 

@@ -38,8 +38,11 @@ button:disabled, input:disabled { cursor: not-allowed; opacity: .65; }
 .search-results { grid-auto-flow: initial; grid-template-columns: repeat(auto-fill, minmax(155px, 180px)); }
 .channel-card { min-width: 0; overflow: hidden; border: 1px solid transparent; border-radius: .7rem; background: #0c2348; box-shadow: 0 12px 22px #00000029; transition: transform .2s ease, background .2s ease, border-color .2s ease; }
 .channel-card:hover { transform: translateY(-5px); border-color: #38bdf8; background: #12366b; }
+.channel-card-header { display: flex; align-items: start; justify-content: space-between; gap: .35rem; }
 .channel-logo { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; background: #163b6b; }
 .channel-card h3 { margin: .9rem .85rem .25rem; overflow: hidden; color: #f8fbff; font-size: .92rem; text-overflow: ellipsis; white-space: nowrap; }
+.favorite-button { margin: .55rem .55rem 0 0; padding: .25rem; border: 0; border-radius: 50%; background: transparent; color: #38bdf8; font-size: 1.25rem; line-height: 1; }
+.favorite-button:hover { background: #38bdf833; }
 .channel-card p { margin: 0 .85rem .8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .channel-country { color: #abc4e6; font-size: .76rem; }
 .channel-categories { color: #38bdf8; font-size: .7rem; font-weight: 700; }

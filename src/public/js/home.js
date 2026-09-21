@@ -1,13 +1,40 @@
 async function loadUser() {
   const response = await fetch('/api/users/me');
-  if (!response.ok) { location.href = '/login'; return; }
+  if (!response.ok) { location.href = '/login'; return false; }
   const user = await response.json();
   document.querySelector('#welcome').textContent = `Welcome, ${user.email} (${user.role})`;
+  return true;
 }
 
 const channelList = document.querySelector('#channel-list');
 const channelStatus = document.querySelector('#channel-status');
 const searchInput = document.querySelector('#channel-search');
+let favoriteChannelIds = new Set();
+
+async function loadFavorites() {
+  const response = await fetch('/api/favorites');
+  if (!response.ok) return;
+
+  const { favorites } = await response.json();
+  favoriteChannelIds = new Set(favorites.map((favorite) => favorite.channelId._id));
+}
+
+async function toggleFavorite(channelId) {
+  const isFavorite = favoriteChannelIds.has(channelId);
+  const response = await fetch(`/api/favorites/${channelId}`, {
+    method: isFavorite ? 'DELETE' : 'POST'
+  });
+
+  if (!response.ok) {
+    channelStatus.textContent = 'Could not update favorites.';
+    return;
+  }
+
+  if (isFavorite) favoriteChannelIds.delete(channelId);
+  else favoriteChannelIds.add(channelId);
+
+  loadChannels(searchInput.value);
+}
 
 function createChannelCard(channel) {
   const card = document.createElement('article');
@@ -21,6 +48,18 @@ function createChannelCard(channel) {
   const name = document.createElement('h3');
   name.textContent = channel.name;
 
+  const favoriteButton = document.createElement('button');
+  const isFavorite = favoriteChannelIds.has(channel._id);
+  favoriteButton.type = 'button';
+  favoriteButton.className = 'favorite-button';
+  favoriteButton.textContent = isFavorite ? '★' : '☆';
+  favoriteButton.setAttribute('aria-label', isFavorite ? `Remove ${channel.name} from favorites` : `Add ${channel.name} to favorites`);
+  favoriteButton.addEventListener('click', () => toggleFavorite(channel._id));
+
+  const header = document.createElement('div');
+  header.className = 'channel-card-header';
+  header.append(name, favoriteButton);
+
   const country = document.createElement('p');
   country.textContent = channel.country;
   country.className = 'channel-country';
@@ -29,7 +68,7 @@ function createChannelCard(channel) {
   categories.textContent = channel.categories.join(' · ');
   categories.className = 'channel-categories';
 
-  card.append(logo, name, country, categories);
+  card.append(logo, header, country, categories);
   return card;
 }
 
@@ -50,7 +89,11 @@ function createChannelRow(title, channels) {
 
 function displayBrowseCollections(channels) {
   const categoryNames = ['News', 'General', 'Music', 'Entertainment', 'Sports', 'Movies'];
+  const favorites = channels.filter((channel) => favoriteChannelIds.has(channel._id));
+  const favoriteSection = favorites.length > 0 ? createChannelRow('Your favorites', favorites) : null;
+  if (favoriteSection) favoriteSection.id = 'favorites';
   const collections = [
+    ...(favoriteSection ? [favoriteSection] : []),
     createChannelRow('Featured channels', channels),
     ...categoryNames
       .map((category) => ({
@@ -105,5 +148,12 @@ document.querySelector('#logout').addEventListener('click', async () => {
   await fetch('/api/auth/logout', { method: 'POST' });
   location.href = '/login';
 });
-loadUser();
-loadChannels();
+async function start() {
+  const hasSession = await loadUser();
+  if (!hasSession) return;
+
+  await loadFavorites();
+  loadChannels();
+}
+
+start();

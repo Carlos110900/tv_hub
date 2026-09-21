@@ -7,7 +7,7 @@ Este documento permite retomar el trabajo aunque cambie la sesión de Codex o se
 ## Estado actual
 
 - La rama local actual es `tv-hub-v2-b-ui-alt`.
-- Esta rama integra la solución de Session 11 con la UI azul inspirada en Spotify y el importador M3U local.
+- Esta rama integra la solución de Session 11 con la UI azul inspirada en Spotify, el importador M3U local y favoritos por usuario.
 - No se ha enviado ningún cambio remoto como parte de esta integración.
 
 ## Ramas relevantes
@@ -16,7 +16,7 @@ Este documento permite retomar el trabajo aunque cambie la sesión de Codex o se
 | --- | --- | --- | --- |
 | `master` | Sin modificar | `dd1ea15` | Base V2 instructora con autenticación, seed, API y tarjetas; sin M3U. |
 | `tv-hub-v2-channels` | Sin modificar | `bd11cc7` | Solución local de Session 11 para Channels. |
-| `tv-hub-v2-b-ui-alt` | Actual | `502c315` | Merge de Session 11 con UI alternativa azul, categorías e importación M3U local. |
+| `tv-hub-v2-b-ui-alt` | Actual | Ver `git log -1` | V3: UI alternativa azul, categorías, importación M3U local y favoritos por usuario. |
 
 ## Session 11 — Channels
 
@@ -75,6 +75,16 @@ GET /ready             ✓
 GET /api/channels      ✓ (búsqueda y filtros)
 ```
 
-## Próximo alcance
+## V3 — Discover & Favorites
 
-La siguiente evolución propuesta es V3 — Discover & Favorites. No se han implementado favoritos ni reproducción de streams en esta rama.
+Cada `Favorite` relaciona un usuario autenticado con un canal. El índice único `{ userId, channelId }` evita duplicados. La UI marca favoritos con ★, permite quitarlos con ☆ y muestra una fila personal al inicio de Home.
+
+Endpoints protegidos:
+
+```text
+GET    /api/favorites
+POST   /api/favorites/:channelId
+DELETE /api/favorites/:channelId
+```
+
+La reproducción de streams sigue fuera de alcance.

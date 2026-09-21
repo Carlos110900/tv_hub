@@ -1,14 +1,15 @@
-# TV Hub V2
+# TV Hub V3 — Discover & Favorites
 
-Proyecto con Node.js, Express, TypeScript, MongoDB y Mongoose. TV Hub V2 conserva la autenticación, JWT, cookies HttpOnly, sesiones persistentes y autorización de V1. Además incorpora un listado visual y simple de canales.
+Proyecto con Node.js, Express, TypeScript, MongoDB y Mongoose. TV Hub V3 conserva la autenticación, JWT, cookies HttpOnly, sesiones persistentes y autorización de V1, además de canales y favoritos por usuario.
 
-## TV Hub V2
+## TV Hub V3
 
 - El registro, login, refresh y logout de V1 siguen funcionando.
 - `Channel` es un modelo de Mongoose con datos de ejemplo almacenados en MongoDB.
 - `GET /api/channels` devuelve los canales activos; acepta `search`, `category`, `country` y `sort=country` de forma opcional.
 - La página Home usa `fetch('/api/channels')` y muestra tarjetas con logo, nombre, país y categorías.
 - La UI inspirada en Spotify agrupa los canales por categoría y permite buscar desde Home.
+- Cada usuario puede marcar un canal con ☆, verlo como ★ y quitarlo de su biblioteca personal.
 - Los ejercicios guiados están en `docs/session-10-student-checkpoints.md`.
 - La guía de checkpoints de Session 11 está en `docs/session-11-student-checkpoints.md`.
 - Como actividad opcional posterior, una playlist M3U local se puede importar con `npm run import:m3u`.
@@ -57,6 +58,8 @@ docker compose up -d
 
 El flujo es Route → Controller → Mongoose Model → MongoDB. Para canales: `channel.routes.ts` → `channel.controller.ts` → `channel.model.ts` → MongoDB → JSON → `src/public/js/home.js`. Las rutas aplican middleware cuando hace falta; los controladores validan y coordinan; los modelos definen persistencia. El frontend es HTML, CSS y JavaScript vanilla con `fetch` nativo.
 
+Para favoritos: `home.js` → `favorite.routes.ts` → `authenticate` → `favorite.controller.ts` → `favorite.model.ts` → MongoDB. Un índice único en `userId` y `channelId` evita que un usuario guarde el mismo canal dos veces.
+
 ## API
 
 | Method | Endpoint               | Description                    |
@@ -71,6 +74,9 @@ El flujo es Route → Controller → Mongoose Model → MongoDB. Para canales: `
 | GET    | `/api/users/me`        | Current authenticated user     |
 | GET    | `/api/admin/demo`      | ADMIN-only demonstration       |
 | GET    | `/api/channels`        | Active channels from MongoDB   |
+| GET    | `/api/favorites`       | Current user's favorite channels |
+| POST   | `/api/favorites/:channelId` | Adds an active channel to the current user's favorites |
+| DELETE | `/api/favorites/:channelId` | Removes a channel from the current user's favorites |
 
 Access and refresh tokens are sent as HttpOnly cookies. MongoDB only stores a SHA-256 hash of the refresh token (bcrypt is used for passwords; it truncates long JWT values). Refreshing replaces that hash, so the previous refresh token cannot be reused.
 
