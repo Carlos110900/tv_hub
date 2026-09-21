@@ -1,16 +1,17 @@
-# TV Hub V3 — Discover & Favorites
+# TV Hub V3, Student Starter, Discover & Favorites
 
-Proyecto con Node.js, Express, TypeScript, MongoDB y Mongoose. TV Hub V3 conserva la autenticación, JWT, cookies HttpOnly, sesiones persistentes y autorización de V1, además de canales y favoritos por usuario.
+Proyecto de clase con Node.js, Express, TypeScript, MongoDB y Mongoose. Esta rama es el starter de TV Hub V3 para practicar Favorites sin cambiar la arquitectura MVC existente.
 
-## TV Hub V3
+## TV Hub V3, Starter de Session 12
 
 - El registro, login, refresh y logout de V1 siguen funcionando.
 - `Channel` es un modelo de Mongoose con datos de ejemplo almacenados en MongoDB.
 - `GET /api/channels` devuelve los canales activos; acepta `search`, `category`, `country` y `sort=country` de forma opcional.
 - La página Home usa `fetch('/api/channels')` y muestra tarjetas con logo, nombre, país y categorías.
 - La UI inspirada en Spotify agrupa los canales por categoría y permite buscar desde Home.
-- Cada usuario puede marcar un canal con ☆, verlo como ★ y quitarlo de su biblioteca personal.
+- Favorites conserva su estructura completa, pero contiene ejercicios guiados pequeños para POST, creación en MongoDB, DELETE y estado visual.
 - Los ejercicios guiados están en `docs/session-10-student-checkpoints.md`.
+- Los ejercicios de Favorites están en `docs/session-12-student-checkpoints.md`.
 - Como actividad opcional posterior, una playlist M3U local se puede importar con `npm run import:m3u`.
 
 ## Requirements
@@ -30,6 +31,8 @@ npm run dev
 ```
 
 La aplicación queda disponible en `http://localhost:3000`.
+
+Antes de ejecutar la aplicación, complete los TODOs requeridos de Session 12. El starter deja algunos métodos intencionalmente incompletos para la clase.
 
 Un clon nuevo usa `.env.example` automáticamente en desarrollo, por lo que no requiere crear un `.env` para empezar la clase. Si se necesita personalizar la configuración local, crear el archivo ignorado por Git:
 
@@ -55,9 +58,9 @@ docker compose up -d
 
 ## Architecture
 
-El flujo es Route → Controller → Mongoose Model → MongoDB. Para canales: `channel.routes.ts` → `channel.controller.ts` → `channel.model.ts` → MongoDB → JSON → `src/public/js/home.js`. Las rutas aplican middleware cuando hace falta; los controladores validan y coordinan; los modelos definen persistencia. El frontend es HTML, CSS y JavaScript vanilla con `fetch` nativo.
+El flujo usa Route, Controller, Mongoose Model y MongoDB. Para canales intervienen `channel.routes.ts`, `channel.controller.ts`, `channel.model.ts`, MongoDB, JSON y `src/public/js/home.js`. Las rutas aplican middleware cuando hace falta; los controladores validan y coordinan; los modelos definen persistencia. El frontend es HTML, CSS y JavaScript vanilla con `fetch` nativo.
 
-Para favoritos: `home.js` → `favorite.routes.ts` → `authenticate` → `favorite.controller.ts` → `favorite.model.ts` → MongoDB. Un índice único en `userId` y `channelId` evita que un usuario guarde el mismo canal dos veces.
+Para favoritos intervienen `home.js`, `favorite.routes.ts`, `authenticate`, `favorite.controller.ts`, `favorite.model.ts` y MongoDB. Un índice único en `userId` y `channelId` evita que un usuario guarde el mismo canal dos veces.
 
 ## API
 
@@ -76,6 +79,8 @@ Para favoritos: `home.js` → `favorite.routes.ts` → `authenticate` → `favor
 | GET    | `/api/favorites`       | Current user's favorite channels |
 | POST   | `/api/favorites/:channelId` | Adds an active channel to the current user's favorites |
 | DELETE | `/api/favorites/:channelId` | Removes a channel from the current user's favorites |
+
+En el starter, estas rutas siguen definidas, pero algunos TODOs impiden completar la compilación o ejecutar la interacción hasta que el alumnado los resuelva. Consulte `docs/session-12-student-checkpoints.md` antes de interpretar esos fallos como errores del proyecto.
 
 Access and refresh tokens are sent as HttpOnly cookies. MongoDB only stores a SHA-256 hash of the refresh token (bcrypt is used for passwords; it truncates long JWT values). Refreshing replaces that hash, so the previous refresh token cannot be reused.
 

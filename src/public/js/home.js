@@ -21,8 +21,11 @@ async function loadFavorites() {
 
 async function toggleFavorite(channelId) {
   const isFavorite = favoriteChannelIds.has(channelId);
+  // TODO 4
+  // Si el canal ya es favorito, debe quitarse. De lo contrario, debe agregarse.
+  // Pista: el método HTTP depende del estado actual.
   const response = await fetch(`/api/favorites/${channelId}`, {
-    method: isFavorite ? 'DELETE' : 'POST'
+    method: isFavorite ? '_______' : '_______'
   });
 
   if (!response.ok) {
@@ -52,7 +55,10 @@ function createChannelCard(channel) {
   const isFavorite = favoriteChannelIds.has(channel._id);
   favoriteButton.type = 'button';
   favoriteButton.className = 'favorite-button';
-  favoriteButton.textContent = isFavorite ? '★' : '☆';
+  // TODO 5
+  // Muestre el estado actual del favorito en la tarjeta.
+  // Pista: un favorito usa estrella llena y los demas usan estrella vacia.
+  favoriteButton.textContent = isFavorite ? '___' : '___';
   favoriteButton.setAttribute('aria-label', isFavorite ? `Remove ${channel.name} from favorites` : `Add ${channel.name} to favorites`);
   favoriteButton.addEventListener('click', () => toggleFavorite(channel._id));
 
