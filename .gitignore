@@ -3,6 +3,7 @@ dist/
 docs/
 !docs/
 docs/*
+!docs/AGENTS.md
 !docs/session-10-student-checkpoints.md
 !docs/session-11-m3u-import.md
 !docs/session-12-student-checkpoints.md
