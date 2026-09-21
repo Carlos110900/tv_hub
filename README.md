@@ -10,7 +10,7 @@ Proyecto con Node.js, Express, TypeScript, MongoDB y Mongoose. TV Hub V2 conserv
 - La página Home usa `fetch('/api/channels')` y muestra tarjetas con logo, nombre, país y categorías.
 - La UI inspirada en Spotify agrupa los canales por categoría y permite buscar desde Home.
 - Los ejercicios guiados están en `docs/session-10-student-checkpoints.md`.
-- La guía de preparación completada para Session 11 está en `docs/session-11-student-checkpoints.md`.
+- La guía de checkpoints de Session 11 está en `docs/session-11-student-checkpoints.md`.
 - Como actividad opcional posterior, una playlist M3U local se puede importar con `npm run import:m3u`.
 
 ## Requirements

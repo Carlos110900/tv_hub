@@ -1,29 +1,26 @@
 # Estado del proyecto — TV Hub
 
-Última actualización: 17 de septiembre de 2026.
+Última actualización: 21 de septiembre de 2026.
 
 Este documento permite retomar el trabajo aunque cambie la sesión de Codex o se cierre la terminal.
 
 ## Estado actual
 
-- Los servidores de Express y MongoDB están detenidos.
-- `master` conserva la versión completa e instructora de TV Hub V2, sin importación ni parsing M3U.
-- La rama publicada para estudiantes es `origin/tv-hub-v2-channels`.
-- La rama local actual es `tv-hub-v2-channels` y tiene cambios todavía sin publicar, incluida la solución completa de los TODOs de sesión 11.
+- La rama local actual es `tv-hub-v2-b-ui-alt`.
+- Esta rama integra la solución de Session 11 con la UI azul inspirada en Spotify y el importador M3U local.
+- No se ha enviado ningún cambio remoto como parte de esta integración.
 
 ## Ramas relevantes
 
 | Rama | Estado | Commit principal | Contenido |
 | --- | --- | --- | --- |
-| `master` | Local | `dd1ea15` | V2 instructora: autenticación V1, canales, seed, API, búsqueda y tarjetas; sin M3U. |
-| `tv-hub-v2-channels` | Remota y local | `517ce38` en `origin` | Starter de sesión 11 con TODOs pequeños para canales. |
-| `tv-hub-v2-channels` | Solo local, pendiente de push | `e65c4c1` | Versión completa de los TODOs, con comentarios `TODO X implementado`; también hay documentación local pendiente. |
-| `tv-hub-v2-b` | Local | `f4d8e76` | Variante avanzada: canales más importador M3U local. |
-| `tv-hub-v2-b-ui-alt` | Local | `fbb6139` | Variante avanzada con importador M3U y UI alternativa azul. |
+| `master` | Sin modificar | `dd1ea15` | Base V2 instructora con autenticación, seed, API y tarjetas; sin M3U. |
+| `tv-hub-v2-channels` | Sin modificar | `bd11cc7` | Solución local de Session 11 para Channels. |
+| `tv-hub-v2-b-ui-alt` | Actual | `502c315` | Merge de Session 11 con UI alternativa azul, categorías e importación M3U local. |
 
-## Starter de sesión 11
+## Session 11 — Channels
 
-La rama remota `tv-hub-v2-channels` sirve para clase. Conserva la arquitectura MVC y pide completar piezas pequeñas:
+La guía `docs/session-11-student-checkpoints.md` conserva los checkpoints didácticos para explicar:
 
 1. recuperar canales con Mongoose;
 2. mostrar nombre;
@@ -33,7 +30,7 @@ La rama remota `tv-hub-v2-channels` sirve para clase. Conserva la arquitectura M
 
 También incluye dos misiones opcionales: país y ordenamiento por nombre.
 
-La solución completa está en el commit local `e65c4c1`; no se ha publicado por decisión del docente.
+La solución completa está integrada en la rama actual.
 
 ## Datos de canales
 
@@ -48,11 +45,11 @@ npm run dev
 
 El comando `npm run seed:channels` reemplaza la colección `channels` por esos 20 ejemplos locales.
 
-Los 176 canales de Argentina importados anteriormente no están en Git ni se comparten con los alumnos. Existen solamente en el volumen local de MongoDB y provienen de un archivo M3U local ignorado por Git.
+Un docente puede importar archivos M3U locales no versionados por país. Esos datos quedan en MongoDB; no se comparten por Git.
 
-## Variante avanzada M3U
+## Importación M3U local
 
-La importación M3U queda fuera de `master` y de `tv-hub-v2-channels`. Solo existe en las ramas de referencia `tv-hub-v2-b` y `tv-hub-v2-b-ui-alt`.
+La importación M3U está disponible en la rama actual y permanece fuera de `master` y de `tv-hub-v2-channels`.
 
 En una de esas ramas, el uso es:
 
@@ -63,21 +60,21 @@ npm run import:m3u -- docs/argentina_playlist.m3u Argentina
 
 No fusionar esas ramas con `master` ni con la rama de estudiantes si se desea conservar el alcance didáctico simple de V2.
 
-## Validación de la versión completa local
+## Validación de la rama integrada
 
-El commit local `e65c4c1` fue validado con:
+La integración fue validada con:
 
 ```text
 npm run build          ✓
-npm test               ✓ 3 suites, 9 tests
+npm test               ✓ 4 suites, 11 tests
 docker compose config  ✓
+docker compose up -d   ✓
+npm run seed:channels  ✓ (20 canales)
 GET /health            ✓
 GET /ready             ✓
-GET /api/channels      ✓
+GET /api/channels      ✓ (búsqueda y filtros)
 ```
 
-## Próximos pasos
+## Próximo alcance
 
-- Para impartir la sesión: usar `origin/tv-hub-v2-channels` y no publicar `e65c4c1` todavía.
-- Para mostrar la solución: ejecutar la rama local actual y sembrar los 20 canales didácticos si se desea una base limpia.
-- Para publicar la solución en el futuro: revisar y ejecutar `git push origin tv-hub-v2-channels` desde la rama local actual.
+La siguiente evolución propuesta es V3 — Discover & Favorites. No se han implementado favoritos ni reproducción de streams en esta rama.
