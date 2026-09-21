@@ -65,7 +65,7 @@ function createChannelCard(channel) {
   country.className = 'channel-country';
 
   const categories = document.createElement('p');
-  categories.textContent = channel.categories.join(' · ');
+  categories.textContent = channel.categories.join(', ');
   categories.className = 'channel-categories';
 
   card.append(logo, header, country, categories);

@@ -7,7 +7,7 @@ Este documento permite retomar el trabajo aunque cambie la sesión de Codex o se
 ## Estado actual
 
 - La rama local actual es `tv-hub-v2-b-ui-alt`.
-- Esta rama integra la solución de Session 11 con la UI azul inspirada en Spotify, el importador M3U local y favoritos por usuario.
+- Esta rama contiene TV Hub V3: UI azul inspirada en Spotify, canales por categorías, importador M3U local y favoritos por usuario.
 - No se ha enviado ningún cambio remoto como parte de esta integración.
 
 ## Ramas relevantes
@@ -16,21 +16,13 @@ Este documento permite retomar el trabajo aunque cambie la sesión de Codex o se
 | --- | --- | --- | --- |
 | `master` | Sin modificar | `dd1ea15` | Base V2 instructora con autenticación, seed, API y tarjetas; sin M3U. |
 | `tv-hub-v2-channels` | Sin modificar | `bd11cc7` | Solución local de Session 11 para Channels. |
-| `tv-hub-v2-b-ui-alt` | Actual | Ver `git log -1` | V3: UI alternativa azul, categorías, importación M3U local y favoritos por usuario. |
+| `tv-hub-v2-b-ui-alt` | Actual | `9312dc7` | V3: UI alternativa azul, categorías, importación M3U local y favoritos por usuario. |
 
-## Session 11 — Channels
+## Material de clase vigente
 
-La guía `docs/session-11-student-checkpoints.md` conserva los checkpoints didácticos para explicar:
-
-1. recuperar canales con Mongoose;
-2. mostrar nombre;
-3. mostrar logo;
-4. convertir categorías a texto;
-5. conectar búsqueda.
-
-También incluye dos misiones opcionales: país y ordenamiento por nombre.
-
-La solución completa está integrada en la rama actual.
+- `docs/requerimientos-v1.md` conserva la referencia histórica de autenticación.
+- `docs/session-10-student-checkpoints.md` contiene checkpoints pequeños y vigentes para explicar Channels.
+- `docs/session-11-m3u-import.md` explica la importación local opcional de playlists M3U.
 
 ## Datos de canales
 
@@ -66,18 +58,19 @@ La integración fue validada con:
 
 ```text
 npm run build          ✓
-npm test               ✓ 4 suites, 11 tests
+npm test               ✓ 5 suites, 14 tests
 docker compose config  ✓
 docker compose up -d   ✓
 npm run seed:channels  ✓ (20 canales)
 GET /health            ✓
 GET /ready             ✓
 GET /api/channels      ✓ (búsqueda y filtros)
+GET /api/favorites     ✓ (pruebas de autenticación, alta, listado, baja y duplicados)
 ```
 
 ## V3 — Discover & Favorites
 
-Cada `Favorite` relaciona un usuario autenticado con un canal. El índice único `{ userId, channelId }` evita duplicados. La UI marca favoritos con ★, permite quitarlos con ☆ y muestra una fila personal al inicio de Home.
+Cada `Favorite` relaciona un usuario autenticado con un canal. El índice único `{ userId, channelId }` evita duplicados. La UI marca favoritos con ★, permite quitarlos con ☆ y muestra una fila personal al inicio de Home. Las categorías se muestran separadas por coma y espacio.
 
 Endpoints protegidos:
 

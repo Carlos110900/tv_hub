@@ -11,7 +11,6 @@ Proyecto con Node.js, Express, TypeScript, MongoDB y Mongoose. TV Hub V3 conserv
 - La UI inspirada en Spotify agrupa los canales por categoría y permite buscar desde Home.
 - Cada usuario puede marcar un canal con ☆, verlo como ★ y quitarlo de su biblioteca personal.
 - Los ejercicios guiados están en `docs/session-10-student-checkpoints.md`.
-- La guía de checkpoints de Session 11 está en `docs/session-11-student-checkpoints.md`.
 - Como actividad opcional posterior, una playlist M3U local se puede importar con `npm run import:m3u`.
 
 ## Requirements
@@ -90,7 +89,7 @@ npm run build
 npm run seed:channels
 ```
 
-The seed replaces the current channel collection with 20 local sample records. It does not fetch playlists or depend on an IPTV service. `streamUrl` is only stored as example data; V2 does not play streams.
+The seed replaces the current channel collection with 20 local sample records. It does not fetch playlists or depend on an IPTV service. `streamUrl` is only stored as example data; V3 does not play streams.
 
 ## Optional local M3U import
 
