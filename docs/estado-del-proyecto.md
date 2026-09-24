@@ -1,89 +1,64 @@
 # Estado del proyecto — TV Hub
 
-Última actualización: 21 de septiembre de 2026.
-
-Este documento permite retomar el trabajo aunque cambie la sesión de Codex o se cierre la terminal.
+Última actualización: 24 de septiembre de 2026.
 
 ## Estado actual
 
-- La rama local actual es `tv-hub-v2-b-ui-alt`.
-- Esta rama es el starter de TV Hub V3 para Session 12, con ejercicios guiados pequeños sobre Favorites.
-- La publicación remota de la rama debe verificarse con `git status --branch`.
-- Los servidores locales están detenidos por solicitud del docente.
+- La rama local actual es tv-hub-v2-b-ui-alt.
+- TV Hub V4, Instructor Edition, es la versión final completa de referencia.
+- La rama local activa tv-hub-v4-base es una variante Student Starter creada a partir de esa versión para Práctica Integradora 1.
+- La aplicación está detenida por solicitud del docente.
+- MongoDB usa un volumen Docker persistente: al bajar contenedores, los canales importados permanecen hasta que se limpie la colección.
 
-## Ramas relevantes
+## V4 final y variante estudiante
 
-| Rama | Estado | Commit principal | Contenido |
-| --- | --- | --- | --- |
-| `master` | Sin modificar | `dd1ea15` | Base V2 instructora con autenticación, seed, API y tarjetas; sin M3U. |
-| `tv-hub-v2-channels` | Sin modificar | `bd11cc7` | Solución local de Session 11 para Channels. |
-| `tv-hub-v2-b-ui-alt` | Actual | `update: v3 base tvhub` | Starter V3: UI alternativa azul, categorías, importación M3U y TODOs de Favorites. |
+La versión final V4 conserva la base MVC y los flujos completos de V1, V2 y V3:
 
-## Material de clase vigente
+- registro, login, refresh, logout, logout all, cookies HttpOnly y sesiones;
+- Channels y filtros simples;
+- Favorites autenticados;
+- Home organizado por países, máximo cinco tarjetas por país y filtro por categoría;
+- Favorites y Country con búsqueda y orden;
+- estructura Watch, Shaka Player y estados de player;
+- parser M3U y scripts locales de importación.
 
-- `docs/requerimientos-v1.md` conserva la referencia histórica de autenticación.
-- `docs/session-10-student-checkpoints.md` contiene checkpoints pequeños y vigentes para explicar Channels.
-- `docs/session-11-m3u-import.md` explica la importación local opcional de playlists M3U.
-- `docs/session-12-student-checkpoints.md` contiene los ejercicios guiados de Favorites para este starter.
+La variante estudiante deja incompletos únicamente ocho puntos de Watch: route, consulta Mongoose, not found, JSON, fetch, datos visuales, carga de Shaka y estados. La UI conserva la variante visual azul de TV Hub en Home, Favorites, Country, Watch, Login y Register.
 
 ## Datos de canales
 
-El repositorio contiene 20 canales didácticos en `src/data/channels.sample.ts`. Cada estudiante debe iniciar MongoDB y cargar sus propios datos:
+Las playlists locales están en docs: argentina_playlist.m3u, canada_playlist.m3u, japon_playlist.m3u, mexico_playlist.m3u y usa_playlist.m3u.
 
-```bash
-docker compose up -d
-npm run build
-npm run seed:channels
-npm run dev
-```
+Carga completa de referencia:
 
-El comando `npm run seed:channels` reemplaza la colección `channels` por esos 20 ejemplos locales.
+    docker compose up -d
+    npm run build
+    npm run import:all-channels
+    npm run dev
 
-Un docente puede importar archivos M3U locales no versionados por país. Esos datos quedan en MongoDB; no se comparten por Git.
+El comando import:all-channels elimina los documentos de favorites y channels e importa todas las playlists. Mantiene users y sessions. La última carga importó 2,064 canales y dejó Favorites vacío.
 
-## Importación M3U local
+Para una playlist individual:
 
-La importación M3U está disponible en la rama actual y permanece fuera de `master` y de `tv-hub-v2-channels`.
+    npm run import:channels -- docs/japon_playlist.m3u Japan
 
-En una de esas ramas, el uso es:
+Ese comando actualiza en vez de duplicar, usando país más tvgId o, si falta, país más streamUrl.
 
-```bash
-npm run build
-npm run import:m3u -- docs/argentina_playlist.m3u Argentina
-```
+## API relevante
 
-No fusionar esas ramas con `master` ni con la rama de estudiantes si se desea conservar el alcance didáctico simple de V2.
+- GET /api/channels
+- GET /api/channels/:id
+- GET /api/favorites
+- POST /api/favorites/:channelId
+- DELETE /api/favorites/:channelId
 
-## Validación de la versión de referencia
+## Validación más reciente
 
-La integración fue validada con:
+- La versión final V4 aprobó npm run build y npm test con 5 suites y 16 pruebas.
+- En la variante estudiante, build y las pruebas que importan app fallan intencionalmente hasta completar TODO 1 a TODO 4.
+- docker compose config: correcto.
+- /health y /ready: correctos.
+- import:all-channels: correcto con 2,064 canales.
 
-```text
-npm run build          ✓
-npm test               ✓ 5 suites, 14 tests
-docker compose config  ✓
-docker compose up -d   ✓
-npm run seed:channels  ✓ (20 canales)
-GET /health            ✓
-GET /ready             ✓
-GET /api/channels      ✓ (búsqueda y filtros)
-GET /api/favorites     ✓ (pruebas de autenticación, alta, listado, baja y duplicados)
-```
+## Limitaciones conocidas
 
-## V3, Student Starter, Discover & Favorites
-
-Cada `Favorite` relaciona un usuario autenticado con un canal. El índice único `{ userId, channelId }` evita duplicados. La UI conserva estrellas, fila personal y categorías separadas por coma y espacio. Los TODOs de Session 12 cubren rutas, persistencia, eliminación y renderizado sin retirar la estructura MVC.
-
-Endpoints protegidos:
-
-```text
-GET    /api/favorites
-POST   /api/favorites/:channelId
-DELETE /api/favorites/:channelId
-```
-
-La reproducción de streams sigue fuera de alcance.
-
-## Estado de validación del starter
-
-La versión de referencia aprobó compilación y 14 pruebas. Este starter deja intencionalmente incompletos los TODOs 1, 2 y 3. Por ello, `npm run build` falla hasta completar los métodos de Express y Mongoose. Las cuatro suites que importan `app.ts` fallan por la ruta POST incompleta; la prueba aislada del parser M3U conserva 2 pruebas exitosas. Los TODOs 4, 5 y 6 se manifiestan en el navegador cuando se completa el backend.
+El reproductor intenta cargar streams externos directamente. CORS, geobloqueo, URLs expiradas, disponibilidad del servidor o headers como referrer/user-agent pueden impedir la reproducción. V4 muestra Error y permite Retry; no incluye proxy ni mecanismos para evadir dichas restricciones.

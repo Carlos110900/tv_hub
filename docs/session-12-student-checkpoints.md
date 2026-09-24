@@ -1,5 +1,7 @@
 # Session 12, TV Hub V3, Favorites
 
+> Referencia histórica de V3. Favorites está completo en la base V4. La práctica vigente deja incompleto solo el flujo Watch y está documentada en docs/practica-integradora-1-student-starter.md.
+
 ## Cómo trabajar
 
 Complete las actividades en orden. Cada TODO cambia una pieza pequeña de una función que ya existe. Después de cada ejercicio, guarde el archivo, compile, ejecute la aplicación y observe el resultado.

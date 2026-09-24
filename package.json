@@ -8,8 +8,8 @@
     "start": "node dist/server.js",
     "test": "jest --runInBand",
     "test:watch": "jest --watch",
-    "seed:channels": "node dist/scripts/seed-channels.js",
-    "import:m3u": "node dist/scripts/import-m3u.js"
+    "import:channels": "node dist/scripts/import-m3u.js",
+    "import:all-channels": "node dist/scripts/import-all-m3u.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",

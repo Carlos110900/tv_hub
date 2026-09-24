@@ -1,18 +1,21 @@
-# TV Hub V3, Student Starter, Discover & Favorites
+# TV Hub V4, Student Starter, Práctica Integradora 1
 
-Proyecto de clase con Node.js, Express, TypeScript, MongoDB y Mongoose. Esta rama es el starter de TV Hub V3 para practicar Favorites sin cambiar la arquitectura MVC existente.
+Proyecto de clase con Node.js, Express, TypeScript, MongoDB y Mongoose. Esta es la base estudiantil de TV Hub V4 para completar el flujo MVC de Watch sin cambiar la arquitectura existente.
 
-## TV Hub V3, Starter de Session 12
+## Práctica Integradora 1
 
 - El registro, login, refresh y logout de V1 siguen funcionando.
-- `Channel` es un modelo de Mongoose con datos de ejemplo almacenados en MongoDB.
+- `Channel` es un modelo de Mongoose alimentado por playlists M3U locales.
 - `GET /api/channels` devuelve los canales activos; acepta `search`, `category`, `country` y `sort=country` de forma opcional.
 - La página Home usa `fetch('/api/channels')` y muestra tarjetas con logo, nombre, país y categorías.
-- La UI inspirada en Spotify agrupa los canales por categoría y permite buscar desde Home.
-- Favorites conserva su estructura completa, pero contiene ejercicios guiados pequeños para POST, creación en MongoDB, DELETE y estado visual.
+- Home agrupa canales por país, muestra hasta cinco por país y permite filtrar por categoría.
+- Favorites permite buscar y ordenar canales guardados; Country muestra todos los canales de un país.
+- Watch obtiene un canal por HTTP y usa Shaka Player para intentar reproducción HLS y DASH.
+- Watch contiene ocho TODOs guiados. Consulte `docs/practica-integradora-1-student-starter.md`.
+- Favorites está completo: permite crear, consultar y quitar favoritos, con estado visual sincronizado en Home y My Favorites.
 - Los ejercicios guiados están en `docs/session-10-student-checkpoints.md`.
 - Los ejercicios de Favorites están en `docs/session-12-student-checkpoints.md`.
-- Como actividad opcional posterior, una playlist M3U local se puede importar con `npm run import:m3u`.
+- Las playlists M3U locales se importan con `npm run import:channels` o `npm run import:all-channels`.
 
 ## Requirements
 
@@ -25,14 +28,33 @@ Proyecto de clase con Node.js, Express, TypeScript, MongoDB y Mongoose. Esta ram
 npm install
 docker compose up -d
 npm run build
-npm run seed:channels
-npm run import:m3u -- docs/argentina_playlist.m3u Argentina
+npm run import:all-channels
 npm run dev
 ```
 
 La aplicación queda disponible en `http://localhost:3000`.
 
-Antes de ejecutar la aplicación, complete los TODOs requeridos de Session 12. El starter deja algunos métodos intencionalmente incompletos para la clase.
+## Cargar canales desde las playlists
+
+Para cargar todos los canales de los archivos con sufijo `_playlist.m3u` dentro de `docs/`, ejecute:
+
+```bash
+docker compose up -d
+npm run build
+npm run import:all-channels
+```
+
+El script encuentra las playlists locales, elimina los documentos existentes de `channels` y `favorites`, e inserta los canales importados. Conserva las colecciones de usuarios y sesiones.
+
+Para importar o actualizar solamente una playlist, indique el archivo y el país:
+
+```bash
+npm run import:channels -- docs/japon_playlist.m3u Japan
+```
+
+La importación individual usa país más `tvgId` o, si falta, país más `streamUrl`, por lo que se puede ejecutar otra vez sin crear duplicados.
+
+La práctica deja intencionalmente incompletos los TODOs de Watch. Antes de resolverlos, la compilación y las pruebas que cargan Express pueden fallar; esto es parte del ejercicio.
 
 Un clon nuevo usa `.env.example` automáticamente en desarrollo, por lo que no requiere crear un `.env` para empezar la clase. Si se necesita personalizar la configuración local, crear el archivo ignorado por Git:
 
@@ -50,8 +72,8 @@ npm run build
 npm start
 npm test
 npm run test:watch
-npm run seed:channels
-npm run import:m3u -- docs/argentina_playlist.m3u Argentina
+npm run import:channels -- docs/argentina_playlist.m3u Argentina
+npm run import:all-channels
 docker compose config
 docker compose up -d
 ```
@@ -76,33 +98,23 @@ Para favoritos intervienen `home.js`, `favorite.routes.ts`, `authenticate`, `fav
 | GET    | `/api/users/me`        | Current authenticated user     |
 | GET    | `/api/admin/demo`      | ADMIN-only demonstration       |
 | GET    | `/api/channels`        | Active channels from MongoDB   |
+| GET    | `/api/channels/:id`    | One active channel for Watch   |
 | GET    | `/api/favorites`       | Current user's favorite channels |
 | POST   | `/api/favorites/:channelId` | Adds an active channel to the current user's favorites |
 | DELETE | `/api/favorites/:channelId` | Removes a channel from the current user's favorites |
 
-En el starter, estas rutas siguen definidas, pero algunos TODOs impiden completar la compilación o ejecutar la interacción hasta que el alumnado los resuelva. Consulte `docs/session-12-student-checkpoints.md` antes de interpretar esos fallos como errores del proyecto.
+Las rutas de favoritos están completas en esta versión de referencia. Consulte `docs/session-12-student-checkpoints.md` para la secuencia didáctica de la funcionalidad.
 
 Access and refresh tokens are sent as HttpOnly cookies. MongoDB only stores a SHA-256 hash of the refresh token (bcrypt is used for passwords; it truncates long JWT values). Refreshing replaces that hash, so the previous refresh token cannot be reused.
 
-## Seed channel data
+## Importación M3U local
 
-Start MongoDB, build the project, then load the local classroom data:
-
-```bash
-docker compose up -d
-npm run build
-npm run seed:channels
-```
-
-The seed replaces the current channel collection with 20 local sample records. It does not fetch playlists or depend on an IPTV service. `streamUrl` is only stored as example data; V3 does not play streams.
-
-## Optional local M3U import
-
-For a later classroom activity, teacher-provided local M3U files can be imported without adding an HTTP endpoint or an external playlist provider:
+Los archivos M3U se procesan únicamente en backend; el navegador nunca los lee:
 
 ```bash
 npm run build
-npm run import:m3u -- docs/argentina_playlist.m3u Argentina
+npm run import:channels -- docs/argentina_playlist.m3u Argentina
+npm run import:all-channels
 ```
 
-The importer reads `#EXTINF`, `tvg-logo`, `group-title`, and the following stream URL. It replaces channels for the specified country only, preserving other countries. Details and student-facing examples are in `docs/session-11-m3u-import.md`.
+El importador individual lee metadatos de la playlist y actualiza por país más tvg-id o stream URL. La importación completa limpia Channels y Favorites antes de cargar todas las playlists de docs. La reproducción depende de que el stream remoto permita CORS y acceso directo desde navegador.

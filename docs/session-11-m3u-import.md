@@ -1,39 +1,38 @@
 # Session 11 — Import local M3U playlists
 
-This optional activity imports teacher-provided M3U files into the existing `channels` collection. It does not download a playlist, test streams, or play video.
+Esta actividad importa playlists M3U locales a la colección channels. El navegador no lee archivos M3U: el parser y los scripts viven en el backend.
 
-## Command
+## Importar una playlist
 
-Build the project and start MongoDB first. Then provide a local file path and the country name to save on its channels:
+Construya el proyecto e inicie MongoDB. Después indique el archivo y el país:
 
-```bash
-npm run build
-npm run import:m3u -- docs/argentina_playlist.m3u Argentina
-```
+    npm run build
+    npm run import:channels -- docs/argentina_playlist.m3u Argentina
 
-Examples for later files:
+El script inserta o actualiza cada canal. Usa country más tvgId si existe tvg-id; de lo contrario usa country más streamUrl. Repetir el mismo comando no crea duplicados.
 
-```bash
-npm run import:m3u -- docs/mexico_playlist.m3u Mexico
-npm run import:m3u -- docs/canada_playlist.m3u Canada
-npm run import:m3u -- docs/usa_playlist.m3u "United States"
-```
+## Importar todas las playlists de docs
 
-Importing a country again replaces only the channels already stored with that same `country` value. Channels from other countries remain in MongoDB.
+    npm run build
+    npm run import:all-channels
 
-## What the parser reads
+Este comando reconoce los archivos con sufijo _playlist.m3u en docs, limpia primero favorites y channels, e importa todos los canales. Users y Sessions no se eliminan.
 
-```text
-#EXTINF ... tvg-logo="..." group-title="News;General",Channel name
-https://server.example/stream.m3u8
-```
+## Qué lee el parser
 
-| M3U value | Channel field |
-| --- | --- |
-| Channel name after the final comma | `name` |
-| `tvg-logo` | `logoUrl` |
-| Next `http://` or `https://` line | `streamUrl` |
-| Command argument | `country` |
-| `group-title`, split by `;` | `categories` |
+    #EXTINF:-1 tvg-id="news.ar" tvg-logo="..." group-title="News;General",News Argentina
+    #EXTVLCOPT:http-user-agent=Example Browser
+    https://server.example/stream.m3u8
 
-The parser ignores comments and options such as `#EXTVLCOPT`. V2 stores stream URLs but does not use them for playback.
+- Nombre después de la última coma: name.
+- tvg-id: tvgId.
+- tvg-logo: logoUrl.
+- Siguiente URL HTTP/HTTPS: streamUrl.
+- País del comando: country.
+- group-title separado por punto y coma: categories.
+- URL .m3u8 o .mpd: streamType HLS o DASH.
+- http-referrer y http-user-agent: metadatos opcionales.
+
+El parser conserva los metadatos presentes en EXTINF o EXTVLCOPT. No descarga playlists, no prueba streams ni analiza segmentos de video.
+
+Los metadatos referrer y user-agent pueden explicar el origen de un stream, pero el navegador no puede establecerlos libremente. V4 no implementa proxy para saltar esas restricciones.

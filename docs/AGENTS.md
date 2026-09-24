@@ -1,157 +1,63 @@
 # TV Hub — AGENTS.md
 
-Educational readability is more important than enterprise-style abstraction.
-Backend code should be understandable by students with basic knowledge of Express, TypeScript, Mongoose and async/await.
-
-Avoid introducing additional architectural layers unless the course explicitly reaches that topic.
-
 ## Propósito
 
-TV Hub es un proyecto universitario de Backend para enseñar Node.js, Express, TypeScript, MVC, MongoDB, Mongoose, Docker, autenticación, autorización, JWT, refresh tokens, persistencia de sesiones, APIs REST y testing.
+TV Hub V4 es la versión final completa para docente de un proyecto universitario sobre Node.js, Express, TypeScript, MVC, MongoDB, Mongoose, Docker, JWT, sesiones y testing.
 
-La versión actual es **V3 — Discover & Favorites sobre la base de autenticación y canales de V2**. V1 sigue siendo parte del proyecto: registro, login, JWT, cookies HttpOnly, sesiones persistentes, refresh, logout y autorización deben conservarse funcionando.
+V1 proporciona autenticación; V2, canales; V3, Favorites; y V4 incorpora Live TV, reproducción e importación de playlists locales.
 
-Antes de modificar código:
+La rama local tv-hub-v4-base es una variante Student Starter derivada de la versión final V4. En esa variante, solo el flujo MVC de Watch contiene TODOs intencionalmente incompletos para Práctica Integradora 1.
 
-1. Lee `docs/AGENTS.md`.
-2. Lee `docs/requerimientos-v1.md` como referencia histórica de la base de autenticación.
-3. Inspecciona el repositorio.
-4. Respeta estrictamente el alcance de V3.
-5. No implementes reproducción de streams ni funcionalidades posteriores.
+Antes de modificar código, lee este archivo y la documentación relevante de docs, inspecciona la implementación existente, conserva los flujos de V1 a V4 y mantén el código pequeño, explícito y apto para explicar en clase.
 
-## Filosofía educativa
+## Arquitectura obligatoria
 
-Prioriza claridad, legibilidad, separación de responsabilidades, facilidad para explicar el código en clase y buenas prácticas reales sin sobrearquitectura.
+    View (src/public)
+        ↓ HTTP / fetch
+    Routes
+        ↓
+    Middleware cuando sea necesario
+        ↓
+    Controllers
+        ↓
+    Mongoose Models
+        ↓
+    MongoDB
 
-Prefiere código explícito y didáctico sobre abstracciones innecesarias.
+La View usa HTML, CSS y JavaScript vanilla. El navegador nunca se comunica con MongoDB directamente.
 
-## Stack obligatorio
-
-Usar Node.js, Express, TypeScript, MongoDB, Mongoose, Docker / Docker Compose, JWT, bcryptjs, cookies HttpOnly, Jest y Supertest.
-
-Puede usarse Zod u otra librería ligera de validación si simplifica el código. No utilizar NestJS, Prisma, TypeORM, Sequelize, Next.js, React, Angular o Vue salvo instrucción posterior explícita.
-
-## TypeScript
-
-Usar TypeScript estricto y evitar `any` siempre que sea razonablemente posible.
-
-## Arquitectura
-
-V3 debe mantener MVC de forma clara:
-
-```text
-View (src/public)
-    ↓
-Routes
-    ↓
-Middleware cuando sea necesario
-    ↓
-Controllers
-    ↓
-Mongoose Models
-    ↓
-MongoDB
-```
-
-La View corresponde al frontend simple servido por Express: HTML, CSS y JavaScript vanilla.
-
-No convertir V3 en Layered Architecture. No agregar `Service`, `Repository`, DTO, Dependency Injection, Clean Architecture ni Hexagonal Architecture.
+No agregar Service, Repository, DTO, Dependency Injection, Clean Architecture, Hexagonal Architecture, frameworks frontend, paginación compleja, colecciones separadas de Country/Category ni abstracciones innecesarias.
 
 ## Responsabilidades
 
-### Routes
+- Routes: endpoints y middleware.
+- Controllers: request, validación, consultas directas de Mongoose y respuesta.
+- Models: schema, validaciones, índices y timestamps.
+- Middleware: autenticación, autorización y errores.
 
-- Definir endpoints.
-- Aplicar middleware.
-- Delegar al Controller.
-- No contener lógica de negocio.
+Prefiere operaciones directas y visibles como Channel.find(), Channel.findOne() y Favorite.findOneAndDelete().
 
-### Controllers
+## Alcance V4 final
 
-- Leer request.
-- Validar datos.
-- Coordinar operaciones.
-- Usar Mongoose Models directamente.
-- Construir response.
+- Home agrupa canales activos por país, muestra un máximo de cinco y permite filtrar por categoría.
+- Favorites permite búsqueda por nombre y orden por nombre o fecha en que se agregó el favorito.
+- Country muestra todos los canales de un país, con búsqueda y orden simples en cliente.
+- Watch obtiene un canal mediante GET /api/channels/:id y usa Shaka Player para HLS/DASH.
+- El player tiene solamente estados Loading, Playing y Error con Retry.
+- El parser M3U y scripts de importación se ejecutan solo en backend.
+- npm run import:channels recibe archivo y país e importa o actualiza una playlist.
+- npm run import:all-channels limpia Channels y Favorites e importa todas las playlists de docs.
 
-### Models
+No implementar proxy de streaming, EPG, historial, recomendaciones, WebSockets, panel administrativo, subida M3U en navegador, controles propios de player ni intentos de evadir CORS, geobloqueos o headers requeridos por servidores remotos.
 
-- Definir Schema, tipos, restricciones, índices, timestamps y validaciones de persistencia.
+## Modelo Channel
 
-### Middleware
+Los campos principales son name, logoUrl, streamUrl, country, categories, isActive y timestamps. Los metadatos opcionales de playlist son tvgId, streamType, httpReferrer y httpUserAgent.
 
-- Autenticación, autorización y manejo de errores.
+No hacer consultas a APIs externas para inferir el país. El país proviene explícitamente del comando de importación o del nombre conocido de una playlist local en la importación masiva.
 
-## Alcance permitido de V3
+## Validación
 
-V3 incorpora una funcionalidad visual y simple de canales y favoritos:
+Antes de terminar ejecutar npm run build, npm test, docker compose config y docker compose up -d. Verificar también /health, /ready, una importación M3U y los flujos visuales principales.
 
-- `Channel` Model con `name`, `logoUrl`, `streamUrl`, `country`, `categories` e `isActive`;
-- datos locales de ejemplo y `npm run seed:channels`;
-- `GET /api/channels`;
-- parámetros opcionales simples: `search`, `category`, `country` y `sort`;
-- tarjetas de canales en `src/public` con logo, nombre, país y categorías;
-- búsqueda simple desde el frontend;
-- tests pequeños y educativos para canales;
-- favoritos por usuario con `Favorite` Model, índice único `userId` + `channelId`, rutas protegidas y estrellas en el frontend.
-
-No crear colecciones separadas para categorías o países. No usar aggregation pipelines ni paginación.
-
-## Autenticación y autorización de V1
-
-- Nunca guardar contraseñas en texto plano; usar `bcryptjs` y persistir solo `passwordHash`.
-- Access Token de corta duración y Refresh Token revocable y rotativo.
-- Nunca almacenar el refresh token original en MongoDB; persistir solamente `refreshTokenHash`.
-- Usar cookies HttpOnly; nunca `localStorage` para refresh tokens.
-- Roles iniciales: `USER` y `ADMIN`.
-- Mantener clara la diferencia entre authentication y authorization.
-- Nunca devolver hashes, tokens, secretos ni stack traces por API.
-
-## MongoDB y Docker
-
-- MongoDB debe ejecutarse en Docker Compose, con volumen persistente y healthcheck.
-- Configurar la conexión mediante `MONGO_URI`; no hardcodear credenciales.
-- Mantener `GET /health` para Express y `GET /ready` para la conexión a MongoDB.
-
-## Fuera de alcance de V3
-
-NO implementar todavía:
-
-- playlists de usuario;
-- reproductor de streaming o integración HLS;
-- gestión avanzada, descarga o parsing de M3U;
-- panel administrativo;
-- analytics;
-- WebSockets;
-- OAuth externo;
-- paginación compleja;
-- `Service`, `Repository`, DTO, Clean Architecture o Hexagonal Architecture;
-- funcionalidades posteriores a V3.
-
-## Testing
-
-Usar Jest + Supertest. Mantener los tests de V1 y cubrir de forma simple health, register, login, refresh, logout, acceso autenticado, autorización por rol, `GET /api/channels`, búsqueda de canales y favoritos.
-
-Los tests deben ser claros y educativos.
-
-## README
-
-Mantener README con Requirements, Installation, Environment variables, Docker, Run application, Run tests, API endpoints, Architecture, seed de canales y referencia a los materiales de clase vigentes.
-
-## Regla de simplicidad
-
-Si existen varias soluciones válidas, preferir la que sea segura, explícita, pequeña, fácil de explicar, fácil de depurar y adecuada para estudiantes.
-
-## Definition of Done
-
-Antes de terminar:
-
-```bash
-npm install
-npm run build
-npm test
-docker compose config
-docker compose up -d
-```
-
-La aplicación debe iniciar correctamente y `GET /health` y `GET /ready` deben responder como se espera. Nunca declarar la tarea terminada sin validar estos puntos.
+En la variante tv-hub-v4-base, build y las pruebas que importan app pueden fallar intencionalmente hasta que se completen los TODOs 1 a 4. La versión final completa no tiene esos TODOs.

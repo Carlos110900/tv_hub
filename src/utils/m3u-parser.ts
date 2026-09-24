@@ -5,6 +5,10 @@ export type ImportedChannel = {
   country: string;
   categories: string[];
   isActive: boolean;
+  tvgId?: string;
+  streamType?: 'hls' | 'dash';
+  httpReferrer?: string;
+  httpUserAgent?: string;
 };
 
 type ChannelInfo = {
@@ -12,7 +16,12 @@ type ChannelInfo = {
   logoUrl: string;
   categories: string[];
   isActive: boolean;
+  tvgId?: string;
+  httpReferrer?: string;
+  httpUserAgent?: string;
 };
+
+const fallbackLogoUrl = '/images/channel-placeholder.svg';
 
 function readAttributes(line: string): Record<string, string> {
   const attributes: Record<string, string> = {};
@@ -35,14 +44,17 @@ function readChannelInfo(line: string): ChannelInfo | undefined {
   const categoryText = attributes['group-title'] ?? '';
   const categories = categoryText ? categoryText.split(';').map((category) => category.trim()).filter(Boolean) : [];
 
-  if (!name || !attributes['tvg-logo']) return undefined;
+  if (!name) return undefined;
 
   return {
     name,
-    logoUrl: attributes['tvg-logo'],
+    logoUrl: attributes['tvg-logo'] || fallbackLogoUrl,
     categories,
     // We trust this explicit label from the playlist without making network requests.
-    isActive: !name.includes('[Geo-blocked]')
+    isActive: !name.includes('[Geo-blocked]'),
+    tvgId: attributes['tvg-id'] || undefined,
+    httpReferrer: attributes['http-referrer'] || undefined,
+    httpUserAgent: attributes['http-user-agent'] || undefined
   };
 }
 
@@ -50,8 +62,19 @@ function isStreamUrl(line: string): boolean {
   return line.startsWith('http://') || line.startsWith('https://');
 }
 
-// Reads the common #EXTINF + URL M3U format. Other # lines, such as
-// #EXTVLCOPT, are intentionally ignored because V2 does not play streams.
+function readStreamType(streamUrl: string): 'hls' | 'dash' | undefined {
+  const path = streamUrl.split('?')[0].toLowerCase();
+  if (path.endsWith('.m3u8')) return 'hls';
+  if (path.endsWith('.mpd')) return 'dash';
+  return undefined;
+}
+
+function readOption(line: string, optionName: string): string | undefined {
+  const prefix = `#EXTVLCOPT:${optionName}=`;
+  return line.startsWith(prefix) ? line.slice(prefix.length).trim() || undefined : undefined;
+}
+
+// Reads the common #EXTINF + URL M3U format used by the local playlists.
 export function parseM3u(playlist: string, country: string): ImportedChannel[] {
   const cleanCountry = country.trim();
   if (!cleanCountry) throw new Error('Country is required to import a playlist');
@@ -67,10 +90,20 @@ export function parseM3u(playlist: string, country: string): ImportedChannel[] {
       continue;
     }
 
+    if (pendingChannel) {
+      pendingChannel.httpReferrer ??= readOption(line, 'http-referrer');
+      pendingChannel.httpUserAgent ??= readOption(line, 'http-user-agent');
+    }
+
     if (!isStreamUrl(line)) continue;
 
     if (pendingChannel) {
-      channels.push({ ...pendingChannel, streamUrl: line, country: cleanCountry });
+      channels.push({
+        ...pendingChannel,
+        streamUrl: line,
+        streamType: readStreamType(line),
+        country: cleanCountry
+      });
     }
 
     pendingChannel = undefined;

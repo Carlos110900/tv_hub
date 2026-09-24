@@ -12,14 +12,17 @@ test('parses channels and ignores M3U option lines between metadata and URL', ()
   const channels = parseM3u(playlist, 'Argentina');
 
   expect(channels).toHaveLength(2);
-  expect(channels[0]).toEqual({
+  expect(channels[0]).toEqual(expect.objectContaining({
     name: 'News Argentina',
     logoUrl: 'https://example.com/news.png',
     streamUrl: 'https://example.com/news/playlist.m3u8',
     country: 'Argentina',
     categories: ['News', 'General'],
-    isActive: true
-  });
+    isActive: true,
+    tvgId: 'news.ar',
+    streamType: 'hls',
+    httpUserAgent: 'Example Browser'
+  }));
   expect(channels[1]).toEqual(expect.objectContaining({ isActive: false }));
 });
 

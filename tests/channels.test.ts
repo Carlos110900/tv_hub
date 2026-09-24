@@ -38,3 +38,16 @@ test('GET /api/channels searches by name', async () => {
   expect(response.body.channels).toHaveLength(1);
   expect(response.body.channels[0].name).toBe('Cine Aula');
 });
+
+test('GET /api/channels/:id returns one active channel', async () => {
+  const channel = await Channel.findOne({ name: 'Noticias Aula' });
+  const response = await request(app).get(`/api/channels/${channel?.id}`).expect(200);
+
+  expect(response.body.channel).toEqual(expect.objectContaining({ name: 'Noticias Aula' }));
+});
+
+test('GET /api/channels/:id returns the existing error for an unavailable channel', async () => {
+  await request(app)
+    .get('/api/channels/507f1f77bcf86cd799439011')
+    .expect(404, { error: { code: 'CHANNEL_NOT_FOUND', message: 'Channel was not found' } });
+});

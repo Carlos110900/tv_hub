@@ -7,23 +7,31 @@ async function importPlaylist(): Promise<void> {
   const [filePath, country] = process.argv.slice(2);
 
   if (!filePath || !country) {
-    throw new Error('Usage: npm run import:m3u -- <playlist-file> <country>');
+    throw new Error('Usage: npm run import:channels -- <playlist-file> <country>');
   }
 
   const playlist = await readFile(filePath, 'utf8');
   const channels = parseM3u(playlist, country);
 
-  if (channels.length === 0) {
-    throw new Error('The playlist did not contain channels with name, logo, and stream URL');
-  }
+  if (channels.length === 0) throw new Error('The playlist did not contain channels with name and stream URL');
 
   await connectDatabase();
 
-  // Re-importing a country replaces only that country, not every channel in MongoDB.
-  await Channel.deleteMany({ country: country.trim() });
-  await Channel.insertMany(channels);
+  let created = 0;
+  let updated = 0;
 
-  console.log(`${channels.length} channels from ${country.trim()} were imported.`);
+  for (const channel of channels) {
+    const identity = channel.tvgId
+      ? { country: channel.country, tvgId: channel.tvgId }
+      : { country: channel.country, streamUrl: channel.streamUrl };
+    const existingChannel = await Channel.findOne(identity);
+
+    await Channel.findOneAndUpdate(identity, channel, { upsert: true, new: true, runValidators: true });
+    if (existingChannel) updated += 1;
+    else created += 1;
+  }
+
+  console.log(`${channels.length} channels from ${country.trim()} processed: ${created} created, ${updated} updated.`);
   await disconnectDatabase();
 }
 

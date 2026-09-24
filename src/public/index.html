@@ -10,55 +10,36 @@
     <main class="app-shell">
       <aside class="sidebar">
         <a class="brand" href="/">TV<span>HUB</span></a>
-
         <nav aria-label="Main navigation">
           <a class="nav-link active" href="/">⌂ <span>Home</span></a>
-          <a class="nav-link" href="#channel-search">⌕ <span>Search</span></a>
-          <a class="nav-link" href="#browse">▦ <span>Browse categories</span></a>
-          <!-- TODO 6A
-            Lleve al usuario a la pagina dedicada de favoritos.
-            Pista: use la ruta del archivo HTML publico de favoritos.
-          -->
-          <a class="nav-link" href="________">☆ <span>Favorites</span></a>
+          <a class="nav-link" href="#browse">▦ <span>Browse channels</span></a>
+          <a class="nav-link" href="/favorites.html">☆ <span>Favorites</span></a>
         </nav>
-
         <div class="sidebar-note">
-          <p class="eyebrow">YOUR LIBRARY</p>
-          <p>Channels are grouped from MongoDB playlist categories.</p>
+          <p class="eyebrow">LIVE TV</p>
+          <p>Discover live channels from countries around the world.</p>
         </div>
       </aside>
-
       <section class="content">
         <header class="topbar">
-          <label class="search-box" for="channel-search">
-            <span>⌕</span>
-            <input id="channel-search" type="search" placeholder="What do you want to watch?" />
-          </label>
-          <div class="account">
-            <p id="welcome">Loading your session…</p>
-            <button id="logout" class="logout-button">Log out</button>
-          </div>
+          <label class="search-box" for="channel-search"><span>⌕</span><input id="channel-search" type="search" placeholder="Search live channels" /></label>
+          <div class="account"><p id="welcome">Loading your session…</p><button id="logout" class="logout-button">Log out</button></div>
         </header>
-
         <section class="hero">
           <p class="eyebrow">LIVE TELEVISION</p>
           <h1>Find a channel<br />for every moment.</h1>
-          <p>Real channel data, organized into simple collections.</p>
+          <p>Browse live channels by country and choose what to watch.</p>
         </section>
-
         <section id="browse" class="browse-section">
           <div class="section-heading">
-            <div>
-              <p class="eyebrow">FROM MONGODB</p>
-              <h2>Browse channels</h2>
-            </div>
+            <div><p class="eyebrow">LIVE CHANNELS</p><h2>Browse by country</h2></div>
             <p id="channel-status">Loading channels…</p>
           </div>
+          <label class="filter-control" for="category-filter">Category <select id="category-filter"><option value="">All categories</option></select></label>
           <div id="channel-list"></div>
         </section>
       </section>
     </main>
-
     <script src="/js/home.js"></script>
   </body>
 </html>

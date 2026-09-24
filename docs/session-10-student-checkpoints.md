@@ -1,5 +1,7 @@
 # Session 10 — TV Hub V2 checkpoints
 
+> Referencia histórica de V2. La práctica vigente es Práctica Integradora 1 de V4; consulte docs/practica-integradora-1-student-starter.md para los TODOs actuales.
+
 The instructor version is complete. For a classroom exercise, replace only the indicated working line with the suggested blank. Students should never need to design the whole feature from zero.
 
 ## MVC map

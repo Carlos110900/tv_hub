@@ -37,18 +37,12 @@ export const addFavorite: RequestHandler = async (request, response) => {
     throw new AppError(409, 'FAVORITE_ALREADY_EXISTS', 'Channel is already in favorites');
   }
 
-  // TODO 2, CODIFICACION EN VIVO
-  // Guarde el nuevo favorito en MongoDB.
-  // Pista: ¿qué método de Mongoose crea un documento nuevo?
-  const favorite = await Favorite.____({ userId, channelId });
+  const favorite = await Favorite.create({ userId, channelId });
   response.status(201).json({ favorite });
 };
 
 export const removeFavorite: RequestHandler = async (request, response) => {
-  // TODO 3
-  // Busque el favorito del usuario y elimínelo en una sola operación.
-  // Pista: Mongoose tiene un método que combina buscar y eliminar.
-  const favorite = await Favorite.________________({
+  const favorite = await Favorite.findOneAndDelete({
     userId: getUserId(request),
     channelId: readChannelId(request.params.channelId)
   });
