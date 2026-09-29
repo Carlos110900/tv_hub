@@ -4,6 +4,7 @@ const reportFormSection = document.querySelector('#report-form-section');
 const reportForm = document.querySelector('#report-form');
 const reportFormStatus = document.querySelector('#report-form-status');
 const channelId = new URLSearchParams(location.search).get('channelId');
+const reportStatuses = ['OPEN', 'IN_PROGRESS', 'RESOLVED'];
 
 async function loadUser() {
   const response = await fetch('/api/users/me');
@@ -33,15 +34,104 @@ function createReportItem(report) {
   created.className = 'report-date';
   created.textContent = new Date(report.createdAt).toLocaleString();
   item.append(channel, reason, description, status, created);
-  if (report.evidenceUrl) {
-    const evidence = document.createElement('a');
-    evidence.href = report.evidenceUrl;
-    evidence.target = '_blank';
-    evidence.rel = 'noopener';
-    evidence.textContent = 'View evidence image';
-    item.append(evidence);
+
+  const evidenceUrls = report.evidenceUrls || [];
+  if (evidenceUrls.length > 0) {
+    const evidenceList = document.createElement('ul');
+    evidenceList.className = 'evidence-list';
+    evidenceUrls.forEach((evidenceUrl, index) => {
+      const evidenceItem = document.createElement('li');
+      const evidence = document.createElement('a');
+      evidence.href = evidenceUrl;
+      evidence.target = '_blank';
+      evidence.rel = 'noopener';
+      evidence.textContent = `View evidence image ${index + 1}`;
+      evidenceItem.append(evidence);
+      evidenceList.append(evidenceItem);
+    });
+    item.append(evidenceList);
   }
+
+  // TODO v4.5 13:
+  // Permite editar reason, description y status desde la lista.
+  // Objetivo: enviar los cambios con PATCH al Report seleccionado.
+  // Resultado esperado: la lista mostrará el Report actualizado.
+  const actions = document.createElement('div');
+  actions.className = 'report-actions';
+  const editButton = document.createElement('button');
+  editButton.type = 'button';
+  editButton.textContent = 'Edit';
+  editButton.addEventListener('click', () => {
+    actions.replaceWith(createEditForm(report));
+  });
+  const deleteButton = document.createElement('button');
+  deleteButton.type = 'button';
+  deleteButton.className = 'danger-button';
+  deleteButton.textContent = 'Delete';
+  deleteButton.addEventListener('click', () => deleteReport(report._id));
+  actions.append(editButton, deleteButton);
+  item.append(actions);
   return item;
+}
+
+function createSelect(options, selectedValue) {
+  const select = document.createElement('select');
+  options.forEach((optionValue) => {
+    const option = new Option(formatReason(optionValue), optionValue, false, optionValue === selectedValue);
+    select.append(option);
+  });
+  return select;
+}
+
+function createEditForm(report) {
+  const form = document.createElement('form');
+  form.className = 'report-edit-form';
+  const reason = createSelect(['STREAM_DOES_NOT_LOAD', 'WRONG_CHANNEL', 'AUDIO_PROBLEM', 'VIDEO_PROBLEM', 'OTHER'], report.reason);
+  const description = document.createElement('textarea');
+  description.maxLength = 1000;
+  description.required = true;
+  description.value = report.description;
+  const status = createSelect(reportStatuses, report.status);
+  const saveButton = document.createElement('button');
+  saveButton.type = 'submit';
+  saveButton.textContent = 'Save changes';
+  const cancelButton = document.createElement('button');
+  cancelButton.type = 'button';
+  cancelButton.textContent = 'Cancel';
+  cancelButton.addEventListener('click', loadReports);
+  form.append(reason, description, status, saveButton, cancelButton);
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const response = await fetch(`/api/reports/${report._id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reason: reason.value, description: description.value, status: status.value })
+    });
+    if (!response.ok) {
+      const payload = await response.json().catch(() => ({}));
+      reportFormStatus.textContent = payload.error?.message || 'Could not update the report.';
+      return;
+    }
+    reportFormStatus.textContent = 'Report updated.';
+    await loadReports();
+  });
+  return form;
+}
+
+// TODO v4.5 16:
+// Elimina un Report desde la lista después de una confirmación simple.
+// Objetivo: solicitar DELETE para el Report seleccionado.
+// Resultado esperado: la lista se actualizará sin el Report eliminado.
+async function deleteReport(reportId) {
+  if (!confirm('Delete this report?')) return;
+  const response = await fetch(`/api/reports/${reportId}`, { method: 'DELETE' });
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({}));
+    reportFormStatus.textContent = payload.error?.message || 'Could not delete the report.';
+    return;
+  }
+  reportFormStatus.textContent = 'Report deleted.';
+  await loadReports();
 }
 
 async function loadReports() {
@@ -62,14 +152,17 @@ async function submitReport(event) {
   formData.append('channelId', channelId);
   formData.append('reason', document.querySelector('#report-reason').value);
   formData.append('description', document.querySelector('#report-description').value);
-  const evidence =
-    document.querySelector('#report-evidence').files[0];
+  // TODO v4.5 10:
+  // Envía cada evidencia seleccionada con el mismo nombre de campo.
+  // Objetivo: relacionar todos los archivos con upload.array().
+  // Resultado esperado: Multer recibirá hasta cinco imágenes en request.files.
+  const evidenceFiles = document.querySelector('#report-evidence').files;
   // TODO v4.5 4:
   // Completa el nombre del campo utilizado para enviar la imagen.
   // Objetivo: relacionar el archivo del formulario con upload.single().
   // Resultado esperado: Multer reconocerá la evidencia enviada por el navegador.
-  if (evidence) {
-    formData.append('evidence', evidence);
+  for (const file of evidenceFiles) {
+    formData.append('evidence', file);
   }
 
   reportFormStatus.textContent = 'Submitting report…';

@@ -111,6 +111,11 @@ body.auth-body main.auth-layout { width: 100%; padding: 0; border-radius: 0; bac
 .report-item .report-status { display: inline-block; padding: .15rem .45rem; border-radius: 999px; background: #155eef33; color: #7dd3fc; font-size: .72rem; font-weight: 800; }
 .report-item .report-date { color: #8ea7ce; font-size: .78rem; }
 .report-item a { color: #7dd3fc; font-weight: 700; }
+.evidence-list { margin: .7rem 0; padding-left: 1.2rem; }
+.report-actions, .report-edit-form { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .85rem; }
+.report-edit-form { display: grid; max-width: 460px; }
+.report-edit-form textarea, .report-edit-form select { box-sizing: border-box; width: 100%; padding: .6rem; border: 1px solid #305687; border-radius: .45rem; background: #061a3c; color: #f8fbff; font: inherit; }
+.danger-button { border-color: #b94a62; color: #fecdd3; }
 
 @media (max-width: 760px) {
   .app-shell { grid-template-columns: 1fr; }
