@@ -17,6 +17,21 @@ Proyecto de clase con Node.js, Express, TypeScript, MongoDB y Mongoose. Esta es 
 - Los ejercicios de Favorites están en `docs/session-12-student-checkpoints.md`.
 - Las playlists M3U locales se importan con `npm run import:channels` o `npm run import:all-channels`.
 
+## Session 14: Channel Reports
+
+La actividad agrega un flujo de reportes para que una persona autenticada pueda enviar un problema de un canal y, de forma opcional, una evidencia de imagen. La arquitectura mantiene Route, Middleware, Controller, Model y View.
+
+Los siguientes TODOs corresponden a la actividad base. El primero debe completarse para levantar el servidor sin error; los demás se resuelven para completar el flujo de Reports.
+
+| TODO | Archivo a modificar | Requerido para levantar el servidor sin error |
+| --- | --- | --- |
+| TODO v4.5 1 | `src/routes/report.routes.ts` | Sí |
+| TODO v4.5 2 | `src/controllers/report.controller.ts` | No |
+| TODO v4.5 3 | `src/controllers/report.controller.ts` | No |
+| TODO v4.5 4 | `src/public/js/reports.js` | No |
+| TODO v4.5 5 | `src/public/js/reports.js` | No |
+| TODO v4.5 6 | `src/controllers/report.controller.ts` | No |
+
 ## Requirements
 
 - Node.js 20 o superior
@@ -102,6 +117,8 @@ Para favoritos intervienen `home.js`, `favorite.routes.ts`, `authenticate`, `fav
 | GET    | `/api/favorites`       | Current user's favorite channels |
 | POST   | `/api/favorites/:channelId` | Adds an active channel to the current user's favorites |
 | DELETE | `/api/favorites/:channelId` | Removes a channel from the current user's favorites |
+| GET | `/api/reports` | Current user's reports, newest first |
+| POST | `/api/reports` | Creates a report with optional image evidence |
 
 Las rutas de favoritos están completas en esta versión de referencia. Consulte `docs/session-12-student-checkpoints.md` para la secuencia didáctica de la funcionalidad.
 

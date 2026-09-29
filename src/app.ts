@@ -6,6 +6,7 @@ import { healthRouter } from './routes/health.routes.js';
 import { authRouter } from './routes/auth.routes.js';
 import { channelRouter } from './routes/channel.routes.js';
 import { favoriteRouter } from './routes/favorite.routes.js';
+import { reportRouter } from './routes/report.routes.js';
 import { adminRouter, userRouter } from './routes/user.routes.js';
 import { errorHandler, notFound } from './middleware/error.middleware.js';
 
@@ -21,12 +22,14 @@ app.use(healthRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/channels', channelRouter);
 app.use('/api/favorites', favoriteRouter);
+app.use('/api/reports', reportRouter);
 app.use('/api/users', userRouter);
 app.use('/api/admin', adminRouter);
 
 app.get('/', (_request, response) => response.sendFile(path.join(publicDirectory, 'index.html')));
 app.get('/login', (_request, response) => response.sendFile(path.join(publicDirectory, 'login.html')));
 app.get('/register', (_request, response) => response.sendFile(path.join(publicDirectory, 'register.html')));
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 app.use(express.static(publicDirectory));
 
 app.use(notFound);

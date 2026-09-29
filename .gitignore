@@ -11,6 +11,7 @@ docs/session-11-m3u-import.md
 docs/session-12-student-checkpoints.md
 docs/v4-context.md
 docs/practica-integradora-1-student-starter.md
+!docs/tv-hub-v5-channel-reports.md
 !docs/argentina_playlist.m3u
 !docs/canada_playlist.m3u
 !docs/japon_playlist.m3u
@@ -18,3 +19,7 @@ docs/practica-integradora-1-student-starter.md
 !docs/usa_playlist.m3u
 .env
 coverage/
+uploads/*
+!uploads/reports/
+uploads/reports/*
+!uploads/reports/.gitkeep
