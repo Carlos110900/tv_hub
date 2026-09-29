@@ -1,6 +1,6 @@
-# TV Hub V4, Student Starter, Práctica Integradora 1
+# TV Hub V5, Teacher Reference
 
-Proyecto de clase con Node.js, Express, TypeScript, MongoDB y Mongoose. Esta es la base estudiantil de TV Hub V4 para completar el flujo MVC de Watch sin cambiar la arquitectura existente.
+Proyecto de clase con Node.js, Express, TypeScript, MongoDB y Mongoose. Esta versión docente mantiene los comentarios TODO como guía de clase, pero incluye sus implementaciones completas para Watch y Channel Reports.
 
 ## Práctica Integradora 1
 
@@ -11,7 +11,7 @@ Proyecto de clase con Node.js, Express, TypeScript, MongoDB y Mongoose. Esta es 
 - Home agrupa canales por país, muestra hasta cinco por país y permite filtrar por categoría.
 - Favorites permite buscar y ordenar canales guardados; Country muestra todos los canales de un país.
 - Watch obtiene un canal por HTTP y usa Shaka Player para intentar reproducción HLS y DASH.
-- Watch contiene ocho TODOs guiados. Consulte `docs/practica-integradora-1-student-starter.md`.
+- Watch conserva ocho TODOs guiados como referencia y ya incluye sus implementaciones.
 - Favorites está completo: permite crear, consultar y quitar favoritos, con estado visual sincronizado en Home y My Favorites.
 - Los ejercicios guiados están en `docs/session-10-student-checkpoints.md`.
 - Los ejercicios de Favorites están en `docs/session-12-student-checkpoints.md`.
@@ -21,7 +21,7 @@ Proyecto de clase con Node.js, Express, TypeScript, MongoDB y Mongoose. Esta es 
 
 La actividad agrega un flujo de reportes para que una persona autenticada pueda enviar un problema de un canal y, de forma opcional, una evidencia de imagen. La arquitectura mantiene Route, Middleware, Controller, Model y View.
 
-Los siguientes TODOs corresponden a la actividad base. El primero debe completarse para levantar el servidor sin error; los demás se resuelven para completar el flujo de Reports.
+Los siguientes TODOs se conservan como guía de la actividad. En esta versión docente sus respuestas ya están implementadas. La última columna indica cuál dependería del inicio del servidor en la versión base.
 
 | TODO | Archivo a modificar | Requerido para levantar el servidor sin error |
 | --- | --- | --- |
