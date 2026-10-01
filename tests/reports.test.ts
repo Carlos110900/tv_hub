@@ -9,6 +9,18 @@ import { Report } from '../src/models/report.model.js';
 import { Session } from '../src/models/session.model.js';
 import { User } from '../src/models/user.model.js';
 import { reportUploadsDirectory } from '../src/middleware/upload.js';
+import { sendReportCreatedEmail, sendReportResolvedEmail } from '../src/notifications/report-email.js';
+import { emitReportCreated, emitReportUpdated } from '../src/realtime/socket.js';
+
+jest.mock('../src/notifications/report-email.js', () => ({
+  sendReportCreatedEmail: jest.fn(),
+  sendReportResolvedEmail: jest.fn()
+}));
+
+jest.mock('../src/realtime/socket.js', () => ({
+  emitReportCreated: jest.fn(),
+  emitReportUpdated: jest.fn()
+}));
 
 let mongo: MongoMemoryServer;
 let channelId: string;
@@ -34,6 +46,7 @@ beforeAll(async () => {
 });
 
 beforeEach(async () => {
+  jest.clearAllMocks();
   await Report.deleteMany({});
   await Session.deleteMany({});
   await User.deleteMany({});
@@ -80,6 +93,92 @@ test('an authenticated user can create and list a report', async () => {
   expect(listed.body.reports).toHaveLength(1);
   expect(listed.body.reports[0].channelId).toEqual(expect.objectContaining({ name: 'Report Channel' }));
   expect(listed.body.reports[0].evidenceUrls).toEqual([]);
+  expect(sendReportCreatedEmail).toHaveBeenCalledWith(
+    expect.objectContaining({ description: 'The channel has no sound.' }),
+    'Report Channel'
+  );
+  expect(emitReportCreated).toHaveBeenCalledWith(
+    expect.any(String),
+    expect.objectContaining({ channelId: expect.objectContaining({ name: 'Report Channel' }) })
+  );
+});
+
+test('a notification failure does not undo a persisted report', async () => {
+  const agent = await registerAgent('notification-failure@example.com');
+  (sendReportCreatedEmail as jest.Mock).mockRejectedValueOnce(new Error('Email provider unavailable'));
+  const logError = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+
+  const created = await agent.post('/api/reports').field(reportFields()).expect(201);
+
+  expect(await Report.exists({ _id: created.body.report._id })).not.toBeNull();
+  expect(emitReportCreated).toHaveBeenCalled();
+  logError.mockRestore();
+});
+
+test('only an ADMIN can view the support report queue', async () => {
+  const reporter = await registerAgent('support-reporter@example.com');
+  await reporter.post('/api/reports').field(reportFields()).expect(201);
+  await reporter.get('/api/admin/reports').expect(403);
+
+  const admin = await registerAgent('support-admin@example.com');
+  await User.updateOne({ email: 'support-admin@example.com' }, { role: 'ADMIN' });
+  await admin.post('/api/auth/login').send({ email: 'support-admin@example.com', password: 'StrongPass123!' }).expect(200);
+
+  const listed = await admin.get('/api/admin/reports').expect(200);
+  expect(listed.body.reports).toHaveLength(1);
+  expect(listed.body.reports[0]).toEqual(expect.objectContaining({
+    channelId: expect.objectContaining({ name: 'Report Channel' }),
+    userId: expect.objectContaining({ email: 'support-reporter@example.com' })
+  }));
+});
+
+test('an ADMIN closes a report, notifies its owner, and the owner sees RESOLVED', async () => {
+  const owner = await registerAgent('close-owner@example.com');
+  const created = await owner.post('/api/reports').field(reportFields()).expect(201);
+  const admin = await registerAgent('close-admin@example.com');
+  await User.updateOne({ email: 'close-admin@example.com' }, { role: 'ADMIN' });
+  await admin.post('/api/auth/login').send({ email: 'close-admin@example.com', password: 'StrongPass123!' }).expect(200);
+  jest.clearAllMocks();
+
+  const closed = await admin.patch(`/api/admin/reports/${created.body.report._id}/close`).expect(200);
+
+  expect(closed.body.report).toEqual(expect.objectContaining({ status: 'RESOLVED', resolvedAt: expect.any(String) }));
+  expect(sendReportResolvedEmail).toHaveBeenCalledWith(
+    expect.objectContaining({ status: 'RESOLVED' }),
+    'Report Channel',
+    'close-owner@example.com'
+  );
+  expect(emitReportUpdated).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({ status: 'RESOLVED' }));
+  const ownerReports = await owner.get('/api/reports').expect(200);
+  expect(ownerReports.body.reports[0]).toEqual(expect.objectContaining({ status: 'RESOLVED', resolvedAt: expect.any(String) }));
+  await owner.patch(`/api/reports/${created.body.report._id}`).send({
+    reason: 'OTHER', description: 'This report is already resolved.', status: 'RESOLVED'
+  }).expect(409, { error: { code: 'REPORT_ALREADY_RESOLVED', message: 'Resolved reports cannot be edited' } });
+  await owner.delete(`/api/reports/${created.body.report._id}`).expect(409, {
+    error: { code: 'REPORT_ALREADY_RESOLVED', message: 'Resolved reports cannot be deleted' }
+  });
+});
+
+test('support metrics count only reports closed by an ADMIN', async () => {
+  const owner = await registerAgent('metrics-owner@example.com');
+  const closedCandidate = await owner.post('/api/reports').field(reportFields()).expect(201);
+  await owner.post('/api/reports').field(reportFields('This report remains open.')).expect(201);
+  const admin = await registerAgent('metrics-admin@example.com');
+  await User.updateOne({ email: 'metrics-admin@example.com' }, { role: 'ADMIN' });
+  await admin.post('/api/auth/login').send({ email: 'metrics-admin@example.com', password: 'StrongPass123!' }).expect(200);
+
+  await admin.patch(`/api/admin/reports/${closedCandidate.body.report._id}/close`).expect(200);
+  const metrics = await admin.get('/api/admin/reports/metrics?days=14').expect(200);
+
+  expect(metrics.body.metrics).toHaveLength(1);
+  expect(metrics.body.metrics[0]).toEqual(expect.objectContaining({
+    day: expect.any(String),
+    resolvedCount: 1,
+    averageResponseMinutes: expect.any(Number)
+  }));
+  expect((await admin.get('/api/admin/reports?filter=open').expect(200)).body.reports).toHaveLength(1);
+  expect((await admin.get('/api/admin/reports?filter=closed').expect(200)).body.reports).toHaveLength(1);
+  expect((await admin.get('/api/admin/reports?filter=all').expect(200)).body.reports).toHaveLength(2);
 });
 
 test('POST accepts multiple evidence images and GET returns their URLs', async () => {
@@ -135,6 +234,10 @@ test('PATCH updates a report owned by the current user', async () => {
     description: 'The audio is delayed.',
     status: 'IN_PROGRESS'
   }));
+  expect(emitReportUpdated).toHaveBeenCalledWith(
+    expect.any(String),
+    expect.objectContaining({ status: 'IN_PROGRESS', channelId: expect.objectContaining({ name: 'Report Channel' }) })
+  );
 });
 
 test('PATCH cannot update another user report', async () => {

@@ -8,7 +8,7 @@ export const reportReasons = [
   'OTHER'
 ] as const;
 
-export const reportStatuses = ['OPEN', 'IN_PROGRESS', 'RESOLVED'] as const;
+export const reportStatuses = ['OPEN', 'IN_PROGRESS', 'ESCALATED', 'RESOLVED'] as const;
 
 const reportSchema = new Schema(
   {
@@ -16,12 +16,10 @@ const reportSchema = new Schema(
     channelId: { type: Schema.Types.ObjectId, ref: 'Channel', required: true },
     reason: { type: String, enum: reportReasons, required: true },
     description: { type: String, required: true, trim: true, maxlength: 1000 },
-    // TODO v4.5 8:
-    // Guarda las URL de todas las evidencias del Report.
-    // Objetivo: permitir más de una imagen por reporte.
-    // Resultado esperado: evidenceUrls será un arreglo de rutas públicas.
     evidenceUrls: { type: [String], default: [] },
-    status: { type: String, enum: reportStatuses, required: true, default: 'OPEN' }
+    status: { type: String, enum: reportStatuses, required: true, default: 'OPEN' },
+    resolvedAt: { type: Date },
+    resolvedBy: { type: Schema.Types.ObjectId, ref: 'User' }
   },
   { timestamps: true }
 );

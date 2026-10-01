@@ -99,6 +99,8 @@ body.auth-body main.auth-layout { width: 100%; padding: 0; border-radius: 0; bac
 .watch-report:hover { border-color: #38bdf8; background: #12366b; color: #f8fbff; }
 .report-panel { max-width: 680px; margin: 0 0 2.5rem; padding: 1.35rem; border: 1px solid #305687; border-radius: .75rem; background: #0c2348; }
 .report-panel h2 { margin: 0; color: #f8fbff; }
+.support-metrics-panel { max-width: 900px; }
+.support-metrics-panel canvas { max-height: 320px; }
 .report-panel > p { color: #a9c4eb; }
 .report-panel label { display: grid; gap: .45rem; color: #d8e8ff; font-size: .85rem; font-weight: 700; }
 .report-panel input, .report-panel select, .report-panel textarea { box-sizing: border-box; width: 100%; padding: .7rem; border: 1px solid #305687; border-radius: .45rem; background: #061a3c; color: #f8fbff; font: inherit; }
@@ -115,6 +117,9 @@ body.auth-body main.auth-layout { width: 100%; padding: 0; border-radius: 0; bac
 .report-actions, .report-edit-form { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .85rem; }
 .report-edit-form { display: grid; max-width: 460px; }
 .report-edit-form textarea, .report-edit-form select { box-sizing: border-box; width: 100%; padding: .6rem; border: 1px solid #305687; border-radius: .45rem; background: #061a3c; color: #f8fbff; font: inherit; }
+.section-heading label { display: flex; align-items: center; gap: .4rem; color: #b9cff0; font-size: .82rem; }
+.section-heading select { padding: .35rem; border: 1px solid #305687; border-radius: .35rem; background: #061a3c; color: #f8fbff; font: inherit; }
+.report-actions button:disabled { cursor: not-allowed; opacity: .5; }
 .danger-button { border-color: #b94a62; color: #fecdd3; }
 
 @media (max-width: 760px) {

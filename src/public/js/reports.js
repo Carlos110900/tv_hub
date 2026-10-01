@@ -3,14 +3,22 @@ const reportsStatus = document.querySelector('#reports-status');
 const reportFormSection = document.querySelector('#report-form-section');
 const reportForm = document.querySelector('#report-form');
 const reportFormStatus = document.querySelector('#report-form-status');
+const reportsFilter = document.querySelector('#reports-filter');
 const channelId = new URLSearchParams(location.search).get('channelId');
-const reportStatuses = ['OPEN', 'IN_PROGRESS', 'RESOLVED'];
+const reportStatuses = ['OPEN', 'IN_PROGRESS', 'ESCALATED', 'RESOLVED'];
 
 async function loadUser() {
   const response = await fetch('/api/users/me');
   if (!response.ok) { location.href = '/login'; return false; }
   const user = await response.json();
   document.querySelector('#welcome').textContent = `Welcome, ${user.email}`;
+  if (user.role === 'ADMIN') {
+    const supportLink = document.createElement('a');
+    supportLink.className = 'nav-link';
+    supportLink.href = '/support-reports.html';
+    supportLink.textContent = '▦ Support dashboard';
+    document.querySelector('.sidebar nav').append(supportLink);
+  }
   return true;
 }
 
@@ -21,6 +29,7 @@ function formatReason(reason) {
 function createReportItem(report) {
   const item = document.createElement('article');
   item.className = 'report-item';
+  item.dataset.reportId = report._id;
   const channel = document.createElement('h3');
   channel.textContent = report.channelId?.name || 'Channel unavailable';
   const reason = document.createElement('p');
@@ -52,23 +61,21 @@ function createReportItem(report) {
     item.append(evidenceList);
   }
 
-  // TODO v4.5 13:
-  // Permite editar reason, description y status desde la lista.
-  // Objetivo: enviar los cambios con PATCH al Report seleccionado.
-  // Resultado esperado: la lista mostrará el Report actualizado.
   const actions = document.createElement('div');
   actions.className = 'report-actions';
   const editButton = document.createElement('button');
   editButton.type = 'button';
   editButton.textContent = 'Edit';
-  editButton.addEventListener('click', () => {
+  editButton.disabled = report.status === 'RESOLVED';
+  if (!editButton.disabled) editButton.addEventListener('click', () => {
     actions.replaceWith(createEditForm(report));
   });
   const deleteButton = document.createElement('button');
   deleteButton.type = 'button';
   deleteButton.className = 'danger-button';
   deleteButton.textContent = 'Delete';
-  deleteButton.addEventListener('click', () => deleteReport(report._id));
+  deleteButton.disabled = report.status === 'RESOLVED';
+  if (!deleteButton.disabled) deleteButton.addEventListener('click', () => deleteReport(report._id));
   actions.append(editButton, deleteButton);
   item.append(actions);
   return item;
@@ -118,10 +125,6 @@ function createEditForm(report) {
   return form;
 }
 
-// TODO v4.5 16:
-// Elimina un Report desde la lista después de una confirmación simple.
-// Objetivo: solicitar DELETE para el Report seleccionado.
-// Resultado esperado: la lista se actualizará sin el Report eliminado.
 async function deleteReport(reportId) {
   if (!confirm('Delete this report?')) return;
   const response = await fetch(`/api/reports/${reportId}`, { method: 'DELETE' });
@@ -135,7 +138,7 @@ async function deleteReport(reportId) {
 }
 
 async function loadReports() {
-  const response = await fetch('/api/reports');
+  const response = await fetch(`/api/reports?${new URLSearchParams({ filter: reportsFilter.value })}`);
   if (!response.ok) { reportsStatus.textContent = 'Could not load reports.'; return; }
   const { reports } = await response.json();
   reportsStatus.textContent = `${reports.length} report${reports.length === 1 ? '' : 's'}`;
@@ -146,30 +149,53 @@ async function loadReports() {
   reportsList.replaceChildren(...reports.map(createReportItem));
 }
 
+function reportMatchesFilter(report) {
+  if (reportsFilter.value === 'all') return true;
+  if (reportsFilter.value === 'closed') return report.status === 'RESOLVED';
+  return report.status !== 'RESOLVED';
+}
+
+function updateReportsCount() {
+  const count = reportsList.querySelectorAll('.report-item').length;
+  reportsStatus.textContent = `${count} report${count === 1 ? '' : 's'}`;
+}
+
+function applyRealtimeReport(report, isNew) {
+  const existing = reportsList.querySelector(`[data-report-id="${report._id}"]`);
+  if (!reportMatchesFilter(report)) {
+    existing?.remove();
+    updateReportsCount();
+    return;
+  }
+  const item = createReportItem(report);
+  if (existing) {
+    existing.replaceWith(item);
+  } else {
+    const emptyState = reportsList.querySelector('.empty-state');
+    if (emptyState) emptyState.remove();
+    reportsList.prepend(item);
+  }
+  updateReportsCount();
+}
+
+function connectReportsSocket() {
+  const socket = io();
+  socket.on('report:created', (report) => applyRealtimeReport(report, true));
+  socket.on('report:updated', (report) => applyRealtimeReport(report, false));
+}
+
 async function submitReport(event) {
   event.preventDefault();
   const formData = new FormData();
   formData.append('channelId', channelId);
   formData.append('reason', document.querySelector('#report-reason').value);
   formData.append('description', document.querySelector('#report-description').value);
-  // TODO v4.5 10:
-  // Envía cada evidencia seleccionada con el mismo nombre de campo.
-  // Objetivo: relacionar todos los archivos con upload.array().
-  // Resultado esperado: Multer recibirá hasta cinco imágenes en request.files.
   const evidenceFiles = document.querySelector('#report-evidence').files;
-  // TODO v4.5 4:
-  // Completa el nombre del campo utilizado para enviar la imagen.
-  // Objetivo: relacionar el archivo del formulario con upload.single().
-  // Resultado esperado: Multer reconocerá la evidencia enviada por el navegador.
   for (const file of evidenceFiles) {
     formData.append('evidence', file);
   }
 
   reportFormStatus.textContent = 'Submitting report…';
-  // TODO v4.5 5:
-  // Completa el body de la petición utilizando el FormData construido.
-  // Objetivo: enviar los campos de texto y la evidencia en una misma solicitud.
-  // Resultado esperado: POST /api/reports recibirá correctamente multipart/form-data.
   const response = await fetch('/api/reports', {
     method: 'POST',
     body: formData
@@ -194,5 +220,12 @@ function configureReportForm() {
 }
 
 document.querySelector('#logout').addEventListener('click', async () => { await fetch('/api/auth/logout', { method: 'POST' }); location.href = '/login'; });
-async function start() { if (await loadUser()) { configureReportForm(); await loadReports(); } }
+reportsFilter.addEventListener('change', loadReports);
+async function start() {
+  if (await loadUser()) {
+    configureReportForm();
+    await loadReports();
+    connectReportsSocket();
+  }
+}
 start();
