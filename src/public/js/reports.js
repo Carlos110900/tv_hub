@@ -64,22 +64,14 @@ async function submitReport(event) {
   formData.append('description', document.querySelector('#report-description').value);
   const evidence =
     document.querySelector('#report-evidence').files[0];
-  // TODO v4.5 4:
-  // Completa el nombre del campo utilizado para enviar la imagen.
-  // Objetivo: relacionar el archivo del formulario con upload.single().
-  // Resultado esperado: Multer reconocerá la evidencia enviada por el navegador.
   if (evidence) {
-    formData.append('________', evidence);
+    formData.append('evidence', evidence);
   }
 
   reportFormStatus.textContent = 'Submitting report…';
-  // TODO v4.5 5:
-  // Completa el body de la petición utilizando el FormData construido.
-  // Objetivo: enviar los campos de texto y la evidencia en una misma solicitud.
-  // Resultado esperado: POST /api/reports recibirá correctamente multipart/form-data.
   const response = await fetch('/api/reports', {
     method: 'POST',
-    body: ________
+    body: formData
   });
   if (!response.ok) {
     const payload = await response.json().catch(() => ({}));
