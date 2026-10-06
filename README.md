@@ -1,37 +1,10 @@
-# TV Hub V6.5, Teacher Reference
+# TV Hub V6.5 — starter de Audit Logs
 
-Proyecto de clase con Node.js, Express, TypeScript, MongoDB y Mongoose. Esta versión docente incluye las implementaciones completas de Watch y Channel Reports.
+Aplicación de clase con Node.js, Express, TypeScript, MongoDB/Mongoose y frontend HTML, CSS y JavaScript. Esta rama, `tv-hub-v6.5-logs-base`, prepara el live coding de la sesión 16: la infraestructura de Audit Logs y los eventos de seguridad funcionan; cinco escrituras de eventos REPORT quedan señaladas como ejercicios.
 
-TV Hub V6 agrega operaciones de soporte sobre Reports: correo con Nodemailer, escalación programada con node-cron, sincronización en tiempo real con Socket.IO, cierre administrativo y métricas de atención. Los usuarios ven sus propios Reports; el rol `ADMIN` usa `/support-reports.html` y `/support-metrics.html`. Consulte [la guía de operaciones de V6](docs/tv-hub-v6-operations.md).
+## Inicio rápido
 
-La rama `tv-hub-v6.5-audit` agrega Audit Logs de Reports y seguridad. La sesión 16 enseña principalmente el flujo Report → persistencia → Audit Log → correo/WebSocket. ADMIN puede inspeccionar el historial de cada Report y consultar `/logs.html` con filtros, búsqueda y orden por fecha. Consulte [la guía de Audit Logs](docs/tv-hub-v6-audit-logs.md) y [el estado actual del proyecto](docs/estado-del-proyecto.md).
-
-**Starter de sesión 16:** la rama `tv-hub-v6.5-logs-base` conserva la auditoría SECURITY, el modelo, el helper y toda la interfaz ADMIN. Deja cinco puntos `TODO V6.5 AUDIT` exclusivamente para escribir los eventos REPORT durante clase. Consulte [la secuencia de live coding](docs/session-16-audit-live-coding.md).
-
-## Práctica Integradora 1
-
-- El registro, login, refresh y logout de V1 siguen funcionando.
-- `Channel` es un modelo de Mongoose alimentado por playlists M3U locales.
-- `GET /api/channels` devuelve los canales activos; acepta `search`, `category`, `country` y `sort=country` de forma opcional.
-- La página Home usa `fetch('/api/channels')` y muestra tarjetas con logo, nombre, país y categorías.
-- Home agrupa canales por país, muestra hasta cinco por país y permite filtrar por categoría.
-- Favorites permite buscar y ordenar canales guardados; Country muestra todos los canales de un país.
-- Watch obtiene un canal por HTTP y usa Shaka Player para intentar reproducción HLS y DASH.
-- Favorites está completo: permite crear, consultar y quitar favoritos, con estado visual sincronizado en Home y My Favorites.
-- Los ejercicios guiados están en `docs/session-10-student-checkpoints.md`.
-- Los ejercicios de Favorites están en `docs/session-12-student-checkpoints.md`.
-- Las playlists M3U locales se importan con `npm run import:channels` o `npm run import:all-channels`.
-
-## Session 14: Channel Reports
-
-La actividad agrega un flujo de reportes para que una persona autenticada pueda enviar un problema de un canal, adjuntar hasta cinco evidencias de imagen, editar el reporte y eliminarlo junto con sus archivos locales. La arquitectura mantiene Route, Middleware, Controller, Model y View.
-
-## Requirements
-
-- Node.js 20 o superior
-- Docker y Docker Compose
-
-## Installation and environment
+Requisitos: Node.js 20 o superior y Docker con Compose.
 
 ```bash
 npm install
@@ -41,99 +14,64 @@ npm run import:all-channels
 npm run dev
 ```
 
-La aplicación queda disponible en `http://localhost:3000`.
+Abre `http://localhost:3000`. `/health` comprueba el servidor y `/ready` confirma la conexión con MongoDB. En desarrollo se carga `.env.example` si no existe `.env`; copia ese archivo a `.env` para personalizar secretos JWT, MongoDB, correo o el tiempo de escalación.
 
-## Cargar canales desde las playlists
-
-Para cargar todos los canales de los archivos con sufijo `_playlist.m3u` dentro de `docs/`, ejecute:
-
-```bash
-docker compose up -d
-npm run build
-npm run import:all-channels
-```
-
-El script encuentra las playlists locales, elimina los documentos existentes de `channels` y `favorites`, e inserta los canales importados. Conserva las colecciones de usuarios y sesiones.
-
-Para importar o actualizar solamente una playlist, indique el archivo y el país:
+`npm run import:all-channels` carga las playlists `docs/*_playlist.m3u` y **reemplaza Channels y Favorites**. Para importar una sola playlist después de compilar:
 
 ```bash
 npm run import:channels -- docs/japon_playlist.m3u Japan
 ```
 
-La importación individual usa país más `tvgId` o, si falta, país más `streamUrl`, por lo que se puede ejecutar otra vez sin crear duplicados.
+Otros comandos: `npm test` ejecuta Jest, `npm start` sirve la compilación y `docker compose down` detiene MongoDB sin borrar su volumen.
 
-Las ramas históricas `tv-hub-v5-final` y `tv-hub-v5-base` corresponden al material de V5. Este workspace está en la rama docente V6.5 de Audit Logs.
+## Usuarios y acceso
 
-Un clon nuevo usa `.env.example` automáticamente en desarrollo, por lo que no requiere crear un `.env` para empezar la clase. Si se necesita personalizar la configuración local, crear el archivo ignorado por Git:
+- `POST /api/auth/register` crea una cuenta con rol `USER` e inicia sesión. No hay usuarios ni contraseñas precargados en un clon nuevo.
+- `USER` puede ver canales, usar Favorites y crear, consultar, editar o eliminar sus propios Reports según las reglas de estado.
+- `ADMIN` puede consultar y cerrar Reports, ver métricas y leer Audit Logs. Los endpoints ADMIN comprueban el rol en el backend.
+- Los tokens de acceso y refresh viajan en cookies HttpOnly. Las sesiones se guardan en MongoDB y el refresh rota su token.
 
-```bash
-cp .env.example .env
-```
-
-Las variables requeridas están documentadas en `.env.example`: `PORT`, `NODE_ENV`, `MONGO_URI`, secretos JWT y los TTL de ambos tokens. En producción se debe proporcionar un `.env` seguro o variables de entorno equivalentes; los secretos de ejemplo no son válidos para producción.
-
-## Commands
+Para preparar un ADMIN de desarrollo, registra primero una cuenta y cambia su rol en MongoDB. Sustituye el correo del ejemplo y vuelve a iniciar sesión para obtener un JWT con el rol actualizado:
 
 ```bash
-npm run dev
-npm run build
-npm start
-npm test
-npm run test:watch
-npm run import:channels -- docs/argentina_playlist.m3u Argentina
-npm run import:all-channels
-docker compose config
-docker compose up -d
+docker compose exec mongo mongosh tvhub --eval 'db.users.updateOne({email:"admin@example.com"},{$set:{role:"ADMIN"}})'
 ```
 
-## Architecture
+La cuenta `admin@mail.com` se ha usado en demostraciones locales, pero su existencia depende del volumen conservado; el proyecto no la crea automáticamente.
 
-El flujo usa Route, Controller, Mongoose Model y MongoDB. Para canales intervienen `channel.routes.ts`, `channel.controller.ts`, `channel.model.ts`, MongoDB, JSON y `src/public/js/home.js`. Las rutas aplican middleware cuando hace falta; los controladores validan y coordinan; los modelos definen persistencia. El frontend es HTML, CSS y JavaScript vanilla con `fetch` nativo.
+## Funciones
 
-Para favoritos intervienen `home.js`, `favorite.routes.ts`, `authenticate`, `favorite.controller.ts`, `favorite.model.ts` y MongoDB. Un índice único en `userId` y `channelId` evita que un usuario guarde el mismo canal dos veces.
+- **Canales y reproducción:** importación M3U en backend, catálogo por país y categoría, búsqueda, página Country y Watch con Shaka Player.
+- **Favorites:** guardar, buscar, ordenar y quitar canales favoritos.
+- **Reports:** hasta cinco imágenes de evidencia, edición y eliminación propias, correo de notificación, actualización por Socket.IO y escalación automática de Reports abiertos.
+- **Soporte ADMIN:** cola de Reports, cierre administrativo y métricas diarias en `/support-reports.html` y `/support-metrics.html`.
+- **Audit Logs:** eventos SECURITY de login, refresh, logout, sesiones y acceso denegado; API y páginas ADMIN para consultar logs globales o por Report. En esta rama los cinco eventos REPORT (`CREATED`, `UPDATED`, `ESCALATED`, `RESOLVED`, `DELETED`) son los puntos de live coding y aún no se escriben automáticamente.
 
-Para Reports intervienen `reports.js`, `report.routes.ts`, `authenticate`, Multer, `report.controller.ts`, `report.model.ts`, MongoDB y `uploads/reports`. El POST acepta hasta cinco imágenes. PATCH solo modifica `reason`, `description` y `status`; DELETE elimina el Report propio y procura borrar sus evidencias locales. Los estados disponibles son `OPEN`, `IN_PROGRESS`, `ESCALATED` y `RESOLVED`.
+## API actual
 
-Audit Logs usa `audit-log.model.ts` y un helper pequeño llamado desde el controlador de Reports, el cron, autenticación y el middleware de autorización. Los logs son de solo lectura para ADMIN; un fallo al guardar un log no deshace la operación principal.
+Las rutas protegidas usan las cookies de sesión. `ADMIN` indica que se exige ese rol; `USER` indica cualquier persona autenticada.
 
-## API
+| Método | Ruta | Acceso y función |
+| --- | --- | --- |
+| GET | `/health`, `/ready` | Público; salud del servidor y conexión a MongoDB |
+| POST | `/api/auth/register`, `/api/auth/login` | Público; crea cuenta o inicia sesión |
+| POST | `/api/auth/refresh`, `/api/auth/logout` | Cookie de refresh; rota token o termina sesión |
+| POST | `/api/auth/logout-all` | USER; revoca todas sus sesiones |
+| GET | `/api/users/me` | USER; perfil actual |
+| GET | `/api/channels`, `/api/channels/:id` | Público; lista o detalle de canal activo |
+| GET | `/api/favorites` | USER; favoritos propios |
+| POST, DELETE | `/api/favorites/:channelId` | USER; agrega o quita favorito |
+| GET, POST | `/api/reports` | USER; lista o crea Report propio |
+| PATCH, DELETE | `/api/reports/:id` | USER; edita o elimina Report propio cuando no está resuelto |
+| GET | `/api/admin/reports` | ADMIN; cola de Reports |
+| PATCH | `/api/admin/reports/:id/close` | ADMIN; resuelve un Report |
+| GET | `/api/admin/reports/metrics` | ADMIN; métricas de atención |
+| GET | `/api/admin/reports/:reportId/logs` | ADMIN; historial de un Report |
+| GET | `/api/admin/logs` | ADMIN; logs globales con filtros, búsqueda y orden por fecha |
+| GET | `/api/admin/demo` | ADMIN; endpoint de demostración de roles |
 
-| Method | Endpoint               | Description                    |
-| ------ | ---------------------- | ------------------------------ |
-| GET    | `/health`              | Express health check           |
-| GET    | `/ready`               | MongoDB readiness check        |
-| POST   | `/api/auth/register`   | Creates a USER and signs in    |
-| POST   | `/api/auth/login`      | Signs in and creates a session |
-| POST   | `/api/auth/refresh`    | Rotates refresh token          |
-| POST   | `/api/auth/logout`     | Revokes current session        |
-| POST   | `/api/auth/logout-all` | Revokes all user sessions      |
-| GET    | `/api/users/me`        | Current authenticated user     |
-| GET    | `/api/admin/demo`      | ADMIN-only demonstration       |
-| GET    | `/api/channels`        | Active channels from MongoDB   |
-| GET    | `/api/channels/:id`    | One active channel for Watch   |
-| GET    | `/api/favorites`       | Current user's favorite channels |
-| POST   | `/api/favorites/:channelId` | Adds an active channel to the current user's favorites |
-| DELETE | `/api/favorites/:channelId` | Removes a channel from the current user's favorites |
-| GET | `/api/reports` | Current user's reports, newest first |
-| POST | `/api/reports` | Creates a report with up to five optional image evidences |
-| PATCH | `/api/reports/:id` | Updates reason, description and status of the current user's report |
-| DELETE | `/api/reports/:id` | Deletes the current user's report and its local evidence files |
-| GET | `/api/admin/reports/:reportId/logs` | ADMIN-only history for one Report |
-| GET | `/api/admin/logs` | ADMIN-only global Audit Logs with filters, search and date sorting |
+`GET /api/channels` acepta `search`, `category`, `country` y `sort=country`. Las listas de Reports aceptan `filter=open|closed|all`; las métricas aceptan `days`. `POST /api/reports` recibe `multipart/form-data` con `channelId`, `reason`, `description` y hasta cinco archivos `evidence`. `GET /api/admin/logs` acepta `category`, `action`, `actorType`, `resourceType`, `resourceId`, `sessionId`, `search`, `sort=createdAt`, `order=asc|desc`, `page` y `limit`.
 
-Las rutas de favoritos están completas en esta versión de referencia. Consulte `docs/session-12-student-checkpoints.md` para la secuencia didáctica de la funcionalidad.
+## Sesión 16
 
-Access and refresh tokens are sent as HttpOnly cookies. MongoDB only stores a SHA-256 hash of the refresh token (bcrypt is used for passwords; it truncates long JWT values). Refreshing replaces that hash, so the previous refresh token cannot be reused.
-
-## Importación M3U local
-
-Los archivos M3U se procesan únicamente en backend; el navegador nunca los lee:
-
-```bash
-npm run build
-npm run import:channels -- docs/argentina_playlist.m3u Argentina
-npm run import:all-channels
-```
-
-El importador individual lee metadatos de la playlist y actualiza por país más tvg-id o stream URL. La importación completa limpia Channels y Favorites antes de cargar todas las playlists de docs. La reproducción depende de que el stream remoto permita CORS y acceso directo desde navegador.
+El modelo y el helper de Audit Logs, los eventos SECURITY y las vistas ADMIN están listos. La clase agrega las cinco llamadas REPORT después de persistir cada operación. Consulta [la guía del starter](docs/session-16-audit-live-coding.md) y [la referencia de Audit Logs](docs/tv-hub-v6-audit-logs.md). La solución completa está en la rama `tv-hub-v6.5-audit`.
