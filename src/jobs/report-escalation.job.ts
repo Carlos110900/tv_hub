@@ -16,11 +16,8 @@ export async function escalateOldReports(): Promise<number> {
     try {
       report.status = 'ESCALATED';
       await report.save();
-      await recordAuditLog({
-        category: 'REPORT', action: 'REPORT_ESCALATED', actorType: 'SYSTEM',
-        resourceType: 'REPORT', resourceId: report.id,
-        metadata: { previousStatus: 'OPEN', newStatus: 'ESCALATED', escalationMinutes: env.reportEscalationMinutes }
-      });
+      // TODO V6.5 AUDIT 3:
+      // Record that the SYSTEM escalated this Report after it was persisted.
       const userId = report.populated('userId')
         ? (report.userId as unknown as { _id: { toString(): string } })._id.toString()
         : report.userId.toString();

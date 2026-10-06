@@ -63,7 +63,8 @@ afterAll(async () => {
   await mongo.stop();
 });
 
-test('Report create and update persist concise audit logs after each change', async () => {
+// Session 16 instructor-solution checks: enable these after the five Report audit calls are live-coded.
+test.skip('Report create and update persist concise audit logs after each change', async () => {
   const owner = await register('reporter@example.com');
   const reportId = await createReport(owner);
   await owner.patch(`/api/reports/${reportId}`).send({
@@ -77,7 +78,7 @@ test('Report create and update persist concise audit logs after each change', as
   expect(JSON.stringify(logs)).not.toContain('The sound is delayed.');
 });
 
-test('deleting a Report retains its audit history', async () => {
+test.skip('deleting a Report retains its audit history', async () => {
   const owner = await register('delete-audit@example.com');
   const reportId = await createReport(owner);
   await owner.delete(`/api/reports/${reportId}`).expect(204);
@@ -86,7 +87,7 @@ test('deleting a Report retains its audit history', async () => {
     .toEqual(expect.arrayContaining(['REPORT_CREATED', 'REPORT_DELETED']));
 });
 
-test('cron escalation and ADMIN resolution audit saved transitions', async () => {
+test.skip('cron escalation and ADMIN resolution audit saved transitions', async () => {
   const owner = await register('escalation@example.com');
   const reportId = await createReport(owner);
   await Report.collection.updateOne({ _id: new mongoose.Types.ObjectId(reportId) }, { $set: { createdAt: new Date(Date.now() - 5 * 60_000) } });
@@ -113,6 +114,11 @@ test('ADMIN sees only requested Report logs, newest first; USER gets 403', async
   const support = await admin('history-admin@example.com');
 
   await owner.get(`/api/admin/reports/${firstId}/logs`).expect(403);
+  expect((await support.get(`/api/admin/reports/${firstId}/logs`).expect(200)).body.logs).toEqual([]);
+  const actorId = (await User.findOne({ email: 'history@example.com' }))!.id;
+  await AuditLog.create({ category: 'REPORT', action: 'REPORT_CREATED', actorType: 'USER', actorId, resourceType: 'REPORT', resourceId: firstId });
+  await AuditLog.create({ category: 'REPORT', action: 'REPORT_UPDATED', actorType: 'USER', actorId, resourceType: 'REPORT', resourceId: firstId });
+  await AuditLog.create({ category: 'REPORT', action: 'REPORT_CREATED', actorType: 'USER', actorId, resourceType: 'REPORT', resourceId: secondId });
   const result = await support.get(`/api/admin/reports/${firstId}/logs`).expect(200);
   expect(result.body.logs.map((log: { action: string }) => log.action)).toEqual(['REPORT_UPDATED', 'REPORT_CREATED']);
   expect(result.body.logs.every((log: { resourceId: string }) => log.resourceId === firstId)).toBe(true);
@@ -167,6 +173,12 @@ test('logout-all terminates each persisted session and an explicitly expired ses
 test('authorization denials are logged and global filters, search, and date order work', async () => {
   const owner = await register('filter-owner@example.com');
   const reportId = await createReport(owner);
+  expect(await AuditLog.countDocuments({ category: 'REPORT' })).toBe(0);
+  await AuditLog.create({
+    category: 'REPORT', action: 'REPORT_CREATED', actorType: 'USER',
+    actorId: (await User.findOne({ email: 'filter-owner@example.com' }))!.id,
+    resourceType: 'REPORT', resourceId: reportId
+  });
   await request(app).post('/api/auth/login').send({ email: 'attempted@example.com', password: 'invalid-password' }).expect(401);
   await owner.get('/api/admin/logs').expect(403);
   const other = await register('filter-other@example.com');
@@ -201,7 +213,7 @@ test('authorization denials are logged and global filters, search, and date orde
   expect(ascending.body.logs.map((log: { _id: string }) => log._id)).toEqual(descending.body.logs.map((log: { _id: string }) => log._id).reverse());
 });
 
-test('an audit write failure leaves the Report persisted and the request successful', async () => {
+test.skip('an audit write failure leaves the Report persisted and the request successful', async () => {
   const owner = await register('failure@example.com');
   const create = jest.spyOn(AuditLog, 'create').mockRejectedValueOnce(new Error('Database unavailable'));
   const error = jest.spyOn(console, 'error').mockImplementation(() => undefined);

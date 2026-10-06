@@ -1,5 +1,7 @@
 # TV Hub V6.5: Audit Logs (Session 16 instructor version)
 
+On `tv-hub-v6.5-logs-base`, the five REPORT write calls described below are teaching TODOs. The SECURITY events, AuditLog infrastructure, read API, and ADMIN views remain complete. The full implementation is on `tv-hub-v6.5-audit`.
+
 ## Teaching scope
 
 The live coding example is the Report flow: validate, persist the Report, write an AuditLog, then continue the existing email and Socket.IO behavior. The Report controller and escalation job show these calls directly. Security auditing is a complete supporting feature; it uses the same small model and write helper without changing the MVC structure.

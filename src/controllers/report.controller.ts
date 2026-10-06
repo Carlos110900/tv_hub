@@ -94,11 +94,8 @@ export const createReport: RequestHandler = async (request, response) => {
       description,
       evidenceUrls
     });
-    await recordAuditLog({
-      category: 'REPORT', action: 'REPORT_CREATED', actorType: request.auth?.role ?? 'USER', actorId: userId,
-      resourceType: 'REPORT', resourceId: report.id,
-      metadata: { channelId, channelName: channel.name, reason, initialStatus: report.status }
-    });
+    // TODO V6.5 AUDIT 1:
+    // Record the REPORT_CREATED audit event after the Report has been persisted.
     const user = await User.findById(userId).select('email');
 
     try {
@@ -196,11 +193,8 @@ export const updateReport: RequestHandler = async (request, response) => {
   report.status = status;
   await report.save();
   if (changedFields.length > 0) {
-    await recordAuditLog({
-      category: 'REPORT', action: 'REPORT_UPDATED', actorType: request.auth!.role,
-      actorId: getUserId(request), resourceType: 'REPORT', resourceId: report.id,
-      metadata: { changedFields, previousStatus, newStatus: report.status }
-    });
+    // TODO V6.5 AUDIT 2:
+    // Record REPORT_UPDATED when at least one relevant field changed.
   }
 
   await report.populate([{ path: 'channelId', select: 'name' }, { path: 'userId', select: 'email' }]);
@@ -219,11 +213,8 @@ export const closeSupportReport: RequestHandler = async (request, response) => {
     report.resolvedAt = new Date();
     report.resolvedBy = new Types.ObjectId(getUserId(request));
     await report.save();
-    await recordAuditLog({
-      category: 'REPORT', action: 'REPORT_RESOLVED', actorType: 'ADMIN',
-      actorId: getUserId(request), resourceType: 'REPORT', resourceId: report.id,
-      metadata: { previousStatus, newStatus: report.status, resolvedAt: report.resolvedAt, resolvedBy: getUserId(request) }
-    });
+    // TODO V6.5 AUDIT 4:
+    // Record that the ADMIN resolved this Report after the state change was persisted.
   }
 
   await report.populate([{ path: 'channelId', select: 'name' }, { path: 'userId', select: 'email' }]);
@@ -260,11 +251,8 @@ export const deleteReport: RequestHandler = async (request, response) => {
     throw new AppError(409, 'REPORT_ALREADY_RESOLVED', 'Resolved reports cannot be deleted');
   }
   await Report.deleteOne({ _id: report._id });
-  await recordAuditLog({
-    category: 'REPORT', action: 'REPORT_DELETED', actorType: request.auth!.role,
-    actorId: getUserId(request), resourceType: 'REPORT', resourceId: reportId,
-    metadata: { previousStatus: report.status, channelId: report.channelId.toString() }
-  });
+  // TODO V6.5 AUDIT 5:
+  // Record the final audit event for this Report using the data captured before deletion.
 
   await removeEvidenceUrls(report.evidenceUrls);
   response.status(204).send();

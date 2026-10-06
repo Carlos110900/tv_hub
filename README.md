@@ -6,6 +6,8 @@ TV Hub V6 agrega operaciones de soporte sobre Reports: correo con Nodemailer, es
 
 La rama `tv-hub-v6.5-audit` agrega Audit Logs de Reports y seguridad. La sesión 16 enseña principalmente el flujo Report → persistencia → Audit Log → correo/WebSocket. ADMIN puede inspeccionar el historial de cada Report y consultar `/logs.html` con filtros, búsqueda y orden por fecha. Consulte [la guía de Audit Logs](docs/tv-hub-v6-audit-logs.md) y [el estado actual del proyecto](docs/estado-del-proyecto.md).
 
+**Starter de sesión 16:** la rama `tv-hub-v6.5-logs-base` conserva la auditoría SECURITY, el modelo, el helper y toda la interfaz ADMIN. Deja cinco puntos `TODO V6.5 AUDIT` exclusivamente para escribir los eventos REPORT durante clase. Consulte [la secuencia de live coding](docs/session-16-audit-live-coding.md).
+
 ## Práctica Integradora 1
 
 - El registro, login, refresh y logout de V1 siguen funcionando.
