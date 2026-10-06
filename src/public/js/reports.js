@@ -18,6 +18,11 @@ async function loadUser() {
     supportLink.href = '/support-reports.html';
     supportLink.textContent = '▦ Support dashboard';
     document.querySelector('.sidebar nav').append(supportLink);
+    const logsLink = document.createElement('a');
+    logsLink.className = 'nav-link';
+    logsLink.href = '/logs.html';
+    logsLink.textContent = '≡ Logs';
+    document.querySelector('.sidebar nav').append(logsLink);
   }
   return true;
 }

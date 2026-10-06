@@ -1,8 +1,10 @@
-# TV Hub V6, Teacher Reference
+# TV Hub V6.5, Teacher Reference
 
 Proyecto de clase con Node.js, Express, TypeScript, MongoDB y Mongoose. Esta versión docente incluye las implementaciones completas de Watch y Channel Reports.
 
 TV Hub V6 agrega operaciones de soporte sobre Reports: correo con Nodemailer, escalación programada con node-cron, sincronización en tiempo real con Socket.IO, cierre administrativo y métricas de atención. Los usuarios ven sus propios Reports; el rol `ADMIN` usa `/support-reports.html` y `/support-metrics.html`. Consulte [la guía de operaciones de V6](docs/tv-hub-v6-operations.md).
+
+La rama `tv-hub-v6.5-audit` agrega Audit Logs de Reports y seguridad. La sesión 16 enseña principalmente el flujo Report → persistencia → Audit Log → correo/WebSocket. ADMIN puede inspeccionar el historial de cada Report y consultar `/logs.html` con filtros, búsqueda y orden por fecha. Consulte [la guía de Audit Logs](docs/tv-hub-v6-audit-logs.md) y [el estado actual del proyecto](docs/estado-del-proyecto.md).
 
 ## Práctica Integradora 1
 
@@ -59,7 +61,7 @@ npm run import:channels -- docs/japon_playlist.m3u Japan
 
 La importación individual usa país más `tvgId` o, si falta, país más `streamUrl`, por lo que se puede ejecutar otra vez sin crear duplicados.
 
-Las ramas históricas `tv-hub-v5-final` y `tv-hub-v5-base` corresponden al material de V5. Este workspace contiene la referencia docente actual de TV Hub V6.
+Las ramas históricas `tv-hub-v5-final` y `tv-hub-v5-base` corresponden al material de V5. Este workspace está en la rama docente V6.5 de Audit Logs.
 
 Un clon nuevo usa `.env.example` automáticamente en desarrollo, por lo que no requiere crear un `.env` para empezar la clase. Si se necesita personalizar la configuración local, crear el archivo ignorado por Git:
 
@@ -89,7 +91,9 @@ El flujo usa Route, Controller, Mongoose Model y MongoDB. Para canales intervien
 
 Para favoritos intervienen `home.js`, `favorite.routes.ts`, `authenticate`, `favorite.controller.ts`, `favorite.model.ts` y MongoDB. Un índice único en `userId` y `channelId` evita que un usuario guarde el mismo canal dos veces.
 
-Para Reports intervienen `reports.js`, `report.routes.ts`, `authenticate`, Multer, `report.controller.ts`, `report.model.ts`, MongoDB y `uploads/reports`. El POST acepta hasta cinco imágenes. PATCH solo modifica `reason`, `description` y `status`; DELETE elimina el Report propio y procura borrar sus evidencias locales. Los estados disponibles son `OPEN`, `IN_PROGRESS` y `RESOLVED`.
+Para Reports intervienen `reports.js`, `report.routes.ts`, `authenticate`, Multer, `report.controller.ts`, `report.model.ts`, MongoDB y `uploads/reports`. El POST acepta hasta cinco imágenes. PATCH solo modifica `reason`, `description` y `status`; DELETE elimina el Report propio y procura borrar sus evidencias locales. Los estados disponibles son `OPEN`, `IN_PROGRESS`, `ESCALATED` y `RESOLVED`.
+
+Audit Logs usa `audit-log.model.ts` y un helper pequeño llamado desde el controlador de Reports, el cron, autenticación y el middleware de autorización. Los logs son de solo lectura para ADMIN; un fallo al guardar un log no deshace la operación principal.
 
 ## API
 
@@ -113,6 +117,8 @@ Para Reports intervienen `reports.js`, `report.routes.ts`, `authenticate`, Multe
 | POST | `/api/reports` | Creates a report with up to five optional image evidences |
 | PATCH | `/api/reports/:id` | Updates reason, description and status of the current user's report |
 | DELETE | `/api/reports/:id` | Deletes the current user's report and its local evidence files |
+| GET | `/api/admin/reports/:reportId/logs` | ADMIN-only history for one Report |
+| GET | `/api/admin/logs` | ADMIN-only global Audit Logs with filters, search and date sorting |
 
 Las rutas de favoritos están completas en esta versión de referencia. Consulte `docs/session-12-student-checkpoints.md` para la secuencia didáctica de la funcionalidad.
 

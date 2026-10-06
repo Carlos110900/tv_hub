@@ -1,6 +1,50 @@
 const reportsList = document.querySelector('#reports-list');
 const reportsStatus = document.querySelector('#reports-status');
 const reportsFilter = document.querySelector('#reports-filter');
+const reportLogsPanel = document.querySelector('#report-logs-panel');
+const reportLogsStatus = document.querySelector('#report-logs-status');
+const reportLogsList = document.querySelector('#report-logs-list');
+
+function renderLogMetadata(metadata) {
+  const list = document.createElement('dl');
+  list.className = 'log-metadata';
+  Object.entries(metadata || {}).forEach(([key, value]) => {
+    const label = document.createElement('dt');
+    label.textContent = key.replace(/([A-Z])/g, ' $1');
+    const detail = document.createElement('dd');
+    detail.textContent = Array.isArray(value) ? value.join(', ') : String(value ?? '');
+    list.append(label, detail);
+  });
+  return list;
+}
+
+function renderReportLog(log) {
+  const item = document.createElement('article');
+  item.className = 'log-item';
+  const title = document.createElement('h3');
+  title.textContent = log.action;
+  const summary = document.createElement('p');
+  summary.textContent = `${new Date(log.createdAt).toLocaleString()} · ${log.category} · ${log.actorId?.email || log.actorType} (${log.actorType})`;
+  item.append(title, summary, renderLogMetadata(log.metadata));
+  return item;
+}
+
+async function showReportLogs(reportId) {
+  reportLogsPanel.hidden = false;
+  document.querySelector('#report-logs-title').textContent = `Report ${reportId} logs`;
+  reportLogsStatus.textContent = 'Loading logs…';
+  reportLogsList.replaceChildren();
+  reportLogsPanel.scrollIntoView({ behavior: 'smooth' });
+  try {
+    const response = await fetch(`/api/admin/reports/${encodeURIComponent(reportId)}/logs`);
+    if (!response.ok) throw new Error('Could not load report logs.');
+    const { logs } = await response.json();
+    reportLogsStatus.textContent = logs.length ? `${logs.length} log${logs.length === 1 ? '' : 's'}` : 'No logs for this report.';
+    reportLogsList.replaceChildren(...logs.map(renderReportLog));
+  } catch {
+    reportLogsStatus.textContent = 'Could not load report logs.';
+  }
+}
 
 function formatReason(reason) {
   return reason.toLowerCase().split('_').map((word) => `${word[0].toUpperCase()}${word.slice(1)}`).join(' ');
@@ -32,6 +76,11 @@ function createReportItem(report) {
     closeButton.addEventListener('click', () => closeReport(report._id));
     item.append(closeButton);
   }
+  const logsButton = document.createElement('button');
+  logsButton.type = 'button';
+  logsButton.textContent = 'Logs';
+  logsButton.addEventListener('click', () => showReportLogs(report._id));
+  item.append(logsButton);
   return item;
 }
 
@@ -63,6 +112,7 @@ async function loadUser() {
   if (!response.ok) { location.href = '/login'; return false; }
   const user = await response.json();
   if (user.role !== 'ADMIN') { location.href = '/'; return false; }
+  document.querySelector('#logs-link').hidden = false;
   document.querySelector('#welcome').textContent = `Support: ${user.email}`;
   return true;
 }
@@ -103,6 +153,7 @@ function connectSupportSocket() {
 
 document.querySelector('#logout').addEventListener('click', async () => { await fetch('/api/auth/logout', { method: 'POST' }); location.href = '/login'; });
 reportsFilter.addEventListener('change', loadReports);
+document.querySelector('#close-report-logs').addEventListener('click', () => { reportLogsPanel.hidden = true; });
 async function start() {
   if (await loadUser()) {
     await loadReports();

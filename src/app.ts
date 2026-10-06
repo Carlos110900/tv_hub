@@ -8,6 +8,7 @@ import { channelRouter } from './routes/channel.routes.js';
 import { favoriteRouter } from './routes/favorite.routes.js';
 import { reportRouter, supportReportRouter } from './routes/report.routes.js';
 import { adminRouter, userRouter } from './routes/user.routes.js';
+import { auditLogRouter } from './routes/audit-log.routes.js';
 import { errorHandler, notFound } from './middleware/error.middleware.js';
 
 const publicFolder = process.env.NODE_ENV === 'production' ? 'dist/public' : 'src/public';
@@ -25,6 +26,7 @@ app.use('/api/favorites', favoriteRouter);
 app.use('/api/reports', reportRouter);
 app.use('/api/admin/reports', supportReportRouter);
 app.use('/api/users', userRouter);
+app.use('/api/admin', auditLogRouter);
 app.use('/api/admin', adminRouter);
 
 app.get('/', (_request, response) => response.sendFile(path.join(publicDirectory, 'index.html')));

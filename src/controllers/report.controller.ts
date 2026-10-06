@@ -9,6 +9,7 @@ import { reportUploadsDirectory } from '../middleware/upload.js';
 import { sendReportCreatedEmail, sendReportResolvedEmail } from '../notifications/report-email.js';
 import { emitReportCreated, emitReportUpdated } from '../realtime/socket.js';
 import { AppError } from '../utils/app-error.js';
+import { recordAuditLog } from '../audit/audit-log.js';
 
 function getUserId(request: Parameters<RequestHandler>[0]): string {
   if (!request.auth) throw new AppError(401, 'UNAUTHORIZED', 'Authentication is required');
@@ -93,6 +94,11 @@ export const createReport: RequestHandler = async (request, response) => {
       description,
       evidenceUrls
     });
+    await recordAuditLog({
+      category: 'REPORT', action: 'REPORT_CREATED', actorType: request.auth?.role ?? 'USER', actorId: userId,
+      resourceType: 'REPORT', resourceId: report.id,
+      metadata: { channelId, channelName: channel.name, reason, initialStatus: report.status }
+    });
     const user = await User.findById(userId).select('email');
 
     try {
@@ -166,14 +172,36 @@ export const updateReport: RequestHandler = async (request, response) => {
   const status = getReportStatus(request.body.status);
 
   const report = await Report.findOne({ _id: reportId, userId: getUserId(request) });
-  if (!report) throw new AppError(404, 'REPORT_NOT_FOUND', 'Report was not found');
+  if (!report) {
+    if (await Report.exists({ _id: reportId })) {
+      await recordAuditLog({
+        category: 'SECURITY', action: 'AUTHORIZATION_DENIED', actorType: request.auth!.role,
+        actorId: getUserId(request), resourceType: 'REPORT', resourceId: reportId,
+        metadata: { method: request.method, route: request.baseUrl + request.path, reason: 'NOT_REPORT_OWNER' }
+      });
+    }
+    throw new AppError(404, 'REPORT_NOT_FOUND', 'Report was not found');
+  }
   if (report.status === 'RESOLVED') {
     throw new AppError(409, 'REPORT_ALREADY_RESOLVED', 'Resolved reports cannot be edited');
   }
+  const previousStatus = report.status;
+  const changedFields = [
+    ...(report.reason !== reason ? ['reason'] : []),
+    ...(report.description !== description ? ['description'] : []),
+    ...(report.status !== status ? ['status'] : [])
+  ];
   report.reason = reason;
   report.description = description;
   report.status = status;
   await report.save();
+  if (changedFields.length > 0) {
+    await recordAuditLog({
+      category: 'REPORT', action: 'REPORT_UPDATED', actorType: request.auth!.role,
+      actorId: getUserId(request), resourceType: 'REPORT', resourceId: report.id,
+      metadata: { changedFields, previousStatus, newStatus: report.status }
+    });
+  }
 
   await report.populate([{ path: 'channelId', select: 'name' }, { path: 'userId', select: 'email' }]);
   emitReportUpdated(getUserId(request), report.toObject());
@@ -186,10 +214,16 @@ export const closeSupportReport: RequestHandler = async (request, response) => {
 
   const wasAlreadyClosed = report.status === 'RESOLVED' && Boolean(report.resolvedAt);
   if (!wasAlreadyClosed) {
+    const previousStatus = report.status;
     report.status = 'RESOLVED';
     report.resolvedAt = new Date();
     report.resolvedBy = new Types.ObjectId(getUserId(request));
     await report.save();
+    await recordAuditLog({
+      category: 'REPORT', action: 'REPORT_RESOLVED', actorType: 'ADMIN',
+      actorId: getUserId(request), resourceType: 'REPORT', resourceId: report.id,
+      metadata: { previousStatus, newStatus: report.status, resolvedAt: report.resolvedAt, resolvedBy: getUserId(request) }
+    });
   }
 
   await report.populate([{ path: 'channelId', select: 'name' }, { path: 'userId', select: 'email' }]);
@@ -212,11 +246,25 @@ export const closeSupportReport: RequestHandler = async (request, response) => {
 export const deleteReport: RequestHandler = async (request, response) => {
   const reportId = getReportId(request.params.id);
   const report = await Report.findOne({ _id: reportId, userId: getUserId(request) });
-  if (!report) throw new AppError(404, 'REPORT_NOT_FOUND', 'Report was not found');
+  if (!report) {
+    if (await Report.exists({ _id: reportId })) {
+      await recordAuditLog({
+        category: 'SECURITY', action: 'AUTHORIZATION_DENIED', actorType: request.auth!.role,
+        actorId: getUserId(request), resourceType: 'REPORT', resourceId: reportId,
+        metadata: { method: request.method, route: request.baseUrl + request.path, reason: 'NOT_REPORT_OWNER' }
+      });
+    }
+    throw new AppError(404, 'REPORT_NOT_FOUND', 'Report was not found');
+  }
   if (report.status === 'RESOLVED') {
     throw new AppError(409, 'REPORT_ALREADY_RESOLVED', 'Resolved reports cannot be deleted');
   }
   await Report.deleteOne({ _id: report._id });
+  await recordAuditLog({
+    category: 'REPORT', action: 'REPORT_DELETED', actorType: request.auth!.role,
+    actorId: getUserId(request), resourceType: 'REPORT', resourceId: reportId,
+    metadata: { previousStatus: report.status, channelId: report.channelId.toString() }
+  });
 
   await removeEvidenceUrls(report.evidenceUrls);
   response.status(204).send();

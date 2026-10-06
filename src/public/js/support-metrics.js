@@ -6,6 +6,7 @@ async function loadUser() {
   if (!response.ok) { location.href = '/login'; return false; }
   const user = await response.json();
   if (user.role !== 'ADMIN') { location.href = '/'; return false; }
+  document.querySelector('#logs-link').hidden = false;
   document.querySelector('#welcome').textContent = `Support: ${user.email}`;
   return true;
 }

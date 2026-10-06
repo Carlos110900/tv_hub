@@ -34,6 +34,19 @@ body.auth-body main.auth-layout { width: 100%; padding: 0; border-radius: 0; bac
 .app-body { display: block; min-height: 100vh; overflow-x: hidden; background: #020817; color: #e8f1ff; }
 .app-shell { box-sizing: border-box; width: 100%; min-height: 100vh; display: grid; grid-template-columns: 248px minmax(0, 1fr); background: #020817; }
 .sidebar { position: sticky; top: 0; align-self: start; min-height: 100vh; box-sizing: border-box; padding: 2rem 1.25rem; background: #06142e; border-right: 1px solid #18345f; }
+[hidden] { display: none !important; }
+.report-logs-panel { max-width: 900px; }
+.logs-list { display: grid; gap: .75rem; }
+.log-item { padding: 1rem; border: 1px solid #305687; border-radius: .65rem; background: #0c2348; }
+.log-item h3 { margin: 0 0 .35rem; color: #f8fbff; overflow-wrap: anywhere; }
+.log-item p { margin: .35rem 0; color: #b9cff0; overflow-wrap: anywhere; }
+.log-metadata { display: grid; grid-template-columns: minmax(120px, auto) 1fr; gap: .35rem .75rem; margin: .75rem 0 0; color: #b9cff0; font-size: .85rem; }
+.log-metadata dt { color: #8ea7ce; text-transform: capitalize; }
+.log-metadata dd { margin: 0; overflow-wrap: anywhere; }
+.logs-filters { display: flex; flex-wrap: wrap; gap: .75rem; align-items: end; margin-bottom: 1rem; }
+.logs-filters label { display: grid; gap: .3rem; color: #b9cff0; font-size: .82rem; }
+.logs-filters input, .logs-filters select { padding: .6rem; border: 1px solid #305687; border-radius: .45rem; background: #061a3c; color: #f8fbff; font: inherit; }
+.logs-pagination { display: flex; gap: .75rem; align-items: center; margin-top: 1rem; color: #b9cff0; }
 .brand { display: block; margin: 0 .75rem 2.75rem; color: #f8fbff; text-decoration: none; font-size: 1.45rem; font-weight: 850; letter-spacing: -.08em; }
 .brand span { color: #38bdf8; }
 .sidebar nav { display: grid; gap: .35rem; }

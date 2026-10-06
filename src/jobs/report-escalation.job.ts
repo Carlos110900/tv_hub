@@ -2,6 +2,7 @@ import cron from 'node-cron';
 import { env } from '../config/env.js';
 import { Report } from '../models/report.model.js';
 import { emitReportUpdated } from '../realtime/socket.js';
+import { recordAuditLog } from '../audit/audit-log.js';
 
 export async function escalateOldReports(): Promise<number> {
   const threshold = new Date(Date.now() - env.reportEscalationMinutes * 60 * 1000);
@@ -15,6 +16,11 @@ export async function escalateOldReports(): Promise<number> {
     try {
       report.status = 'ESCALATED';
       await report.save();
+      await recordAuditLog({
+        category: 'REPORT', action: 'REPORT_ESCALATED', actorType: 'SYSTEM',
+        resourceType: 'REPORT', resourceId: report.id,
+        metadata: { previousStatus: 'OPEN', newStatus: 'ESCALATED', escalationMinutes: env.reportEscalationMinutes }
+      });
       const userId = report.populated('userId')
         ? (report.userId as unknown as { _id: { toString(): string } })._id.toString()
         : report.userId.toString();
