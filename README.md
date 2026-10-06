@@ -10,17 +10,18 @@ Requisitos: Node.js 20 o superior y Docker con Compose.
 npm install
 docker compose up -d
 npm run build
-npm run import:all-channels
 npm run dev
 ```
 
 Abre `http://localhost:3000`. `/health` comprueba el servidor y `/ready` confirma la conexión con MongoDB. En desarrollo se carga `.env.example` si no existe `.env`; copia ese archivo a `.env` para personalizar secretos JWT, MongoDB, correo o el tiempo de escalación.
 
-`npm run import:all-channels` carga las playlists `docs/*_playlist.m3u` y **reemplaza Channels y Favorites**. Para importar una sola playlist después de compilar:
+La carpeta `docs/` es local y no se publica en Git. Un clon nuevo inicia sin playlists ni canales; coloca tus archivos M3U locales antes de importar. Para una playlist después de compilar:
 
 ```bash
 npm run import:channels -- docs/japon_playlist.m3u Japan
 ```
+
+Si tienes playlists locales `docs/*_playlist.m3u`, `npm run import:all-channels` las carga todas y **reemplaza Channels y Favorites**.
 
 Otros comandos: `npm test` ejecuta Jest, `npm start` sirve la compilación y `docker compose down` detiene MongoDB sin borrar su volumen.
 
@@ -74,4 +75,4 @@ Las rutas protegidas usan las cookies de sesión. `ADMIN` indica que se exige es
 
 ## Sesión 16
 
-El modelo y el helper de Audit Logs, los eventos SECURITY y las vistas ADMIN están listos. La clase agrega las cinco llamadas REPORT después de persistir cada operación. Consulta [la guía del starter](docs/session-16-audit-live-coding.md) y [la referencia de Audit Logs](docs/tv-hub-v6-audit-logs.md). La solución completa está en la rama `tv-hub-v6.5-audit`.
+El modelo y el helper de Audit Logs, los eventos SECURITY y las vistas ADMIN están listos. La clase agrega las cinco llamadas REPORT después de persistir cada operación. Los materiales de la sesión se conservan localmente en `docs/`. La solución completa está en la rama `tv-hub-v6.5-audit`.
