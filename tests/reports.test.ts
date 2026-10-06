@@ -14,13 +14,28 @@ let channelId: string;
 
 async function registerAgent(email: string) {
   const agent = request.agent(app);
-  await agent.post('/api/auth/register').send({ email, password: 'StrongPass123!' }).expect(201);
+
+  await agent
+    .post('/api/auth/register')
+    .send({
+      email,
+      password: 'StrongPass123!'
+    })
+    .expect(201);
+
   return agent;
 }
 
 async function clearUploadedEvidence() {
   const names = await readdir(reportUploadsDirectory);
-  await Promise.all(names.filter((name) => name !== '.gitkeep').map((name) => unlink(`${reportUploadsDirectory}/${name}`)));
+
+  await Promise.all(
+    names
+      .filter((name) => name !== '.gitkeep')
+      .map((name) =>
+        unlink(`${reportUploadsDirectory}/${name}`)
+      )
+  );
 }
 
 beforeAll(async () => {
@@ -43,6 +58,7 @@ beforeEach(async () => {
     categories: ['News'],
     isActive: true
   });
+
   channelId = channel.id;
 });
 
@@ -53,66 +69,308 @@ afterAll(async () => {
 });
 
 test('reports require authentication', async () => {
-  await request(app).get('/api/reports').expect(401);
-  await request(app).post('/api/reports').expect(401);
+  await request(app)
+    .get('/api/reports')
+    .expect(401);
+
+  await request(app)
+    .post('/api/reports')
+    .expect(401);
 });
 
 test('an authenticated user can create and list a report', async () => {
-  const agent = await registerAgent('reporter@example.com');
+  const agent =
+    await registerAgent('reporter@example.com');
 
-  const created = await agent.post('/api/reports').field({
-    channelId,
-    reason: 'AUDIO_PROBLEM',
-    description: 'The channel has no sound.'
-  }).expect(201);
+  const created = await agent
+    .post('/api/reports')
+    .field({
+      channelId,
+      reason: 'AUDIO_PROBLEM',
+      description: 'The channel has no sound.'
+    })
+    .expect(201);
 
-  expect(created.body.report).toEqual(expect.objectContaining({
-    channelId,
-    reason: 'AUDIO_PROBLEM',
-    description: 'The channel has no sound.',
-    status: 'OPEN'
-  }));
+  expect(created.body.report).toEqual(
+    expect.objectContaining({
+      channelId,
+      reason: 'AUDIO_PROBLEM',
+      description: 'The channel has no sound.',
+      status: 'OPEN',
+      evidenceUrls: []
+    })
+  );
 
-  const listed = await agent.get('/api/reports').expect(200);
+  const listed = await agent
+    .get('/api/reports')
+    .expect(200);
+
   expect(listed.body.reports).toHaveLength(1);
-  expect(listed.body.reports[0].channelId).toEqual(expect.objectContaining({ name: 'Report Channel' }));
+
+  expect(
+    listed.body.reports[0].channelId
+  ).toEqual(
+    expect.objectContaining({
+      name: 'Report Channel'
+    })
+  );
 });
 
 test('an image evidence file is stored and exposed through its URL', async () => {
-  const agent = await registerAgent('image@example.com');
-  const created = await agent.post('/api/reports').field({
-    channelId,
-    reason: 'VIDEO_PROBLEM',
-    description: 'The image is frozen.'
-  }).attach('evidence', Buffer.from('image evidence'), { filename: 'evidence.png', contentType: 'image/png' }).expect(201);
+  const agent =
+    await registerAgent('image@example.com');
 
-  expect(created.body.report.evidenceUrl).toMatch(/^\/uploads\/reports\/.+\.png$/);
-  await request(app).get(created.body.report.evidenceUrl).expect(200);
+  const created = await agent
+    .post('/api/reports')
+    .field({
+      channelId,
+      reason: 'VIDEO_PROBLEM',
+      description: 'The image is frozen.'
+    })
+    .attach(
+      'evidence',
+      Buffer.from('image evidence'),
+      {
+        filename: 'evidence.png',
+        contentType: 'image/png'
+      }
+    )
+    .expect(201);
+
+  expect(
+    created.body.report.evidenceUrls
+  ).toHaveLength(1);
+
+  expect(
+    created.body.report.evidenceUrls[0]
+  ).toMatch(
+    /^\/uploads\/reports\/.+\.png$/
+  );
+
+  await request(app)
+    .get(created.body.report.evidenceUrls[0])
+    .expect(200);
+});
+
+test('a report can store multiple evidence images', async () => {
+  const agent =
+    await registerAgent('multiple@example.com');
+
+  const created = await agent
+    .post('/api/reports')
+    .field({
+      channelId,
+      reason: 'OTHER',
+      description: 'Multiple evidence images.'
+    })
+    .attach(
+      'evidence',
+      Buffer.from('first image'),
+      {
+        filename: 'first.png',
+        contentType: 'image/png'
+      }
+    )
+    .attach(
+      'evidence',
+      Buffer.from('second image'),
+      {
+        filename: 'second.jpg',
+        contentType: 'image/jpeg'
+      }
+    )
+    .expect(201);
+
+  expect(
+    created.body.report.evidenceUrls
+  ).toHaveLength(2);
+
+  expect(
+    created.body.report.evidenceUrls[0]
+  ).toMatch(
+    /^\/uploads\/reports\/.+\.png$/
+  );
+
+  expect(
+    created.body.report.evidenceUrls[1]
+  ).toMatch(
+    /^\/uploads\/reports\/.+\.jpg$/
+  );
 });
 
 test('reports reject invalid report data and invalid files', async () => {
-  const agent = await registerAgent('validation@example.com');
-  await agent.post('/api/reports').field({ channelId, reason: 'NOT_A_REASON', description: 'A valid description.' }).expect(400, {
-    error: { code: 'INVALID_REPORT_REASON', message: 'Report reason is invalid' }
-  });
-  await agent.post('/api/reports').field({ channelId, reason: 'OTHER', description: '' }).expect(400, {
-    error: { code: 'INVALID_REPORT_DESCRIPTION', message: 'Description is required' }
-  });
-  await agent.post('/api/reports').field({ channelId, reason: 'OTHER', description: 'Text evidence is invalid.' })
-    .attach('evidence', Buffer.from('not an image'), { filename: 'evidence.txt', contentType: 'text/plain' })
-    .expect(400, { error: { code: 'INVALID_EVIDENCE_FILE', message: 'Evidence must be an image file' } });
-  await agent.post('/api/reports').field({ channelId, reason: 'OTHER', description: 'Large evidence is invalid.' })
-    .attach('evidence', Buffer.alloc(2 * 1024 * 1024 + 1), { filename: 'large.png', contentType: 'image/png' })
-    .expect(400, { error: { code: 'UPLOAD_ERROR', message: 'Evidence image must be 2 MB or smaller' } });
+  const agent =
+    await registerAgent('validation@example.com');
+
+  await agent
+    .post('/api/reports')
+    .field({
+      channelId,
+      reason: 'NOT_A_REASON',
+      description: 'A valid description.'
+    })
+    .expect(400, {
+      error: {
+        code: 'INVALID_REPORT_REASON',
+        message: 'Report reason is invalid'
+      }
+    });
+
+  await agent
+    .post('/api/reports')
+    .field({
+      channelId,
+      reason: 'OTHER',
+      description: ''
+    })
+    .expect(400, {
+      error: {
+        code: 'INVALID_REPORT_DESCRIPTION',
+        message: 'Description is required'
+      }
+    });
+
+  await agent
+    .post('/api/reports')
+    .field({
+      channelId,
+      reason: 'OTHER',
+      description: 'Text evidence is invalid.'
+    })
+    .attach(
+      'evidence',
+      Buffer.from('not an image'),
+      {
+        filename: 'evidence.txt',
+        contentType: 'text/plain'
+      }
+    )
+    .expect(400, {
+      error: {
+        code: 'INVALID_EVIDENCE_FILE',
+        message: 'Evidence must be an image file'
+      }
+    });
+
+  await agent
+    .post('/api/reports')
+    .field({
+      channelId,
+      reason: 'OTHER',
+      description: 'Large evidence is invalid.'
+    })
+    .attach(
+      'evidence',
+      Buffer.alloc(2 * 1024 * 1024 + 1),
+      {
+        filename: 'large.png',
+        contentType: 'image/png'
+      }
+    )
+    .expect(400, {
+      error: {
+        code: 'UPLOAD_ERROR',
+        message:
+          'Evidence image must be 2 MB or smaller'
+      }
+    });
 });
 
 test('reports only list the current user reports', async () => {
-  const firstUser = await registerAgent('first@example.com');
-  const secondUser = await registerAgent('second@example.com');
-  await firstUser.post('/api/reports').field({ channelId, reason: 'OTHER', description: 'First report.' }).expect(201);
-  await secondUser.post('/api/reports').field({ channelId, reason: 'OTHER', description: 'Second report.' }).expect(201);
+  const firstUser =
+    await registerAgent('first@example.com');
 
-  const listed = await firstUser.get('/api/reports').expect(200);
+  const secondUser =
+    await registerAgent('second@example.com');
+
+  await firstUser
+    .post('/api/reports')
+    .field({
+      channelId,
+      reason: 'OTHER',
+      description: 'First report.'
+    })
+    .expect(201);
+
+  await secondUser
+    .post('/api/reports')
+    .field({
+      channelId,
+      reason: 'OTHER',
+      description: 'Second report.'
+    })
+    .expect(201);
+
+  const listed = await firstUser
+    .get('/api/reports')
+    .expect(200);
+
   expect(listed.body.reports).toHaveLength(1);
-  expect(listed.body.reports[0].description).toBe('First report.');
+
+  expect(
+    listed.body.reports[0].description
+  ).toBe('First report.');
+});
+
+test('a user can update their own report', async () => {
+  const agent =
+    await registerAgent('update@example.com');
+
+  const created = await agent
+    .post('/api/reports')
+    .field({
+      channelId,
+      reason: 'OTHER',
+      description: 'Original description.'
+    })
+    .expect(201);
+
+  const reportId = created.body.report._id;
+
+  const updated = await agent
+    .patch(`/api/reports/${reportId}`)
+    .send({
+      reason: 'VIDEO_PROBLEM',
+      description: 'Updated description.',
+      status: 'OPEN'
+    })
+    .expect(200);
+
+  expect(updated.body.report).toEqual(
+    expect.objectContaining({
+      _id: reportId,
+      reason: 'VIDEO_PROBLEM',
+      description: 'Updated description.',
+      status: 'OPEN'
+    })
+  );
+
+  expect(
+    await Report.countDocuments()
+  ).toBe(1);
+});
+
+test('a user can delete their own report', async () => {
+  const agent =
+    await registerAgent('delete@example.com');
+
+  const created = await agent
+    .post('/api/reports')
+    .field({
+      channelId,
+      reason: 'OTHER',
+      description: 'Delete this report.'
+    })
+    .expect(201);
+
+  const reportId = created.body.report._id;
+
+  await agent
+    .delete(`/api/reports/${reportId}`)
+    .expect(204);
+
+  const deleted =
+    await Report.findById(reportId);
+
+  expect(deleted).toBeNull();
 });
