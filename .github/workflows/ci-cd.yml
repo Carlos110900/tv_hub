@@ -1,0 +1,39 @@
+
+name: TV Hub CI/CD
+
+on:
+  push:
+    branches:
+      - tv-hub-v65-session15
+
+jobs:
+  validar:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar codigo
+        uses: actions/checkout@v4
+
+      - name: Configurar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Ejecutar pruebas
+        run: npm test
+
+      - name: Compilar proyecto
+        run: npm run build
+
+  desplegar:
+    needs: validar
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Desplegar en Render
+        env:
+          DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        run: curl --fail --show-error --silent --request POST "$DEPLOY_HOOK"
